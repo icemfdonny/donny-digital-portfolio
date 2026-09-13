@@ -1,5 +1,4 @@
 import CodeBackdrop from "./CodeBackdrop";
-import { LogoIcon } from "./Logo";
 
 export default function Hero() {
   return (
@@ -64,21 +63,12 @@ export default function Hero() {
               <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
               <span className="ml-3 h-5 flex-1 rounded-full bg-white/5" />
             </div>
-            <div className="relative flex aspect-[4/3] flex-col items-center justify-center gap-3 bg-[linear-gradient(160deg,#242424_0%,#1a1a1a_70%)] p-8">
-              <div
-                className="absolute inset-0 opacity-40"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 30% 30%, rgba(255,107,53,0.25), transparent 55%)",
-                }}
-                aria-hidden="true"
+            <div className="relative aspect-[4/3] overflow-hidden">
+              <img
+                src="/site-preview.png"
+                alt="Preview of the Donny Digital homepage hero"
+                className="h-full w-full object-cover object-top"
               />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-orange/40 bg-orange/10">
-                <LogoIcon className="h-11 w-auto" />
-              </div>
-              <p className="relative text-sm text-white/40">
-                Profile / project mockup placeholder
-              </p>
             </div>
           </div>
 
