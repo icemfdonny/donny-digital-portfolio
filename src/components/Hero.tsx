@@ -24,8 +24,7 @@ export default function Hero() {
           </span>
 
           <h1 className="text-balance mt-7 font-display text-[clamp(2.5rem,6.5vw,5rem)] font-bold leading-[1.03] tracking-tight text-white">
-            Websites with <span className="text-orange">personality.</span>{" "}
-            Digital experiences.
+            Digital <span className="text-orange">experiences.</span>
           </h1>
 
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-white">
