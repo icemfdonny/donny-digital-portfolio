@@ -1,92 +1,62 @@
-import CodeBackdrop from "./CodeBackdrop";
+import type { CSSProperties } from "react";
+import { Link } from "react-router-dom";
+import HeroBackdrop from "./HeroBackdrop";
+import HeroConsole from "./HeroConsole";
+import { ArrowRightIcon } from "./icons";
 
 export default function Hero() {
   return (
-    <section
-      id="home"
-      className="grain relative overflow-hidden bg-charcoal pt-16 pb-24 md:pt-20 md:pb-32"
-    >
-      <CodeBackdrop />
+    <section id="home" className="relative isolate overflow-hidden pb-24 pt-36 md:pb-32 md:pt-48">
+      <HeroBackdrop />
 
-      <div
-        className="pointer-events-none absolute -top-24 right-[-10%] h-[520px] w-[520px] rounded-full bg-orange/30 blur-[110px] md:h-[640px] md:w-[640px]"
-        aria-hidden="true"
-      />
-
-      <div className="relative z-10 mx-auto grid max-w-7xl gap-16 px-6 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-12">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-orange/40 bg-orange/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.14em] text-peach">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-orange" />
-            </span>
-            Available for freelance work
+      <div className="mx-auto max-w-6xl px-6 text-center">
+        <span
+          className="rise-in inline-flex items-center gap-2.5 rounded-full border border-white/12 bg-white/[0.04] py-1.5 pl-3 pr-4 font-mono text-[11px] uppercase tracking-[0.18em] text-neutral-300"
+          style={{ "--d": "0ms" } as CSSProperties}
+        >
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-70" />
+            <span className="relative inline-flex size-2 rounded-full bg-white" />
           </span>
+          Available for freelance work
+        </span>
 
-          <h1 className="text-balance mt-7 font-display text-[clamp(2.5rem,6.5vw,5rem)] font-bold leading-[1.03] tracking-tight text-white">
-            Digital <span className="text-orange">experiences.</span>
-          </h1>
+        <h1 className="mt-9 whitespace-nowrap font-display text-[min(6rem,calc((100vw-3rem)/11.6))] leading-[1.1] tracking-[-0.04em]">
+          <span
+            className="word-in -mb-[0.28em] -mr-[0.16em] inline-block pb-[0.28em] pr-[0.16em] text-silver"
+            style={{ "--i": 0 } as CSSProperties}
+          >
+            Digital
+          </span>{" "}
+          <span className="word-in inline-block" style={{ "--i": 1 } as CSSProperties}>
+            <span className="text-shine -mb-[0.28em] -mr-[0.12em] inline-block animate-shine pb-[0.28em] pr-[0.12em]">experiences.</span>
+          </span>
+        </h1>
 
-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-white">
-            I design and develop memorable websites and products — merging
-            sharp visual craft with clean, considered front-end engineering
-            so brands feel as good to use as they look.
-          </p>
+        <p
+          className="rise-in mx-auto mt-9 max-w-xl text-balance text-base leading-relaxed text-fg/90 md:text-lg"
+          style={{ "--d": "650ms" } as CSSProperties}
+        >
+          I design and develop memorable websites and products &mdash; merging sharp visual craft with clean,
+          considered front-end engineering so brands feel as good to use as they look.
+        </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-4">
-            <a
-              href="#work"
-              className="rounded-full bg-orange px-7 py-3.5 text-sm font-semibold text-charcoal transition-transform hover:-translate-y-0.5"
-            >
-              View my work
-            </a>
-            <a
-              href="#contact"
-              className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white/50"
-            >
-              Let&rsquo;s talk
-            </a>
-          </div>
+        <div
+          className="rise-in mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          style={{ "--d": "800ms" } as CSSProperties}
+        >
+          <Link to="/work" className="btn-primary px-7 py-3.5 text-sm">
+            View my work
+            <ArrowRightIcon className="size-4" />
+          </Link>
+          <Link to="/contact" className="btn-ghost px-7 py-3.5 text-sm">
+            Let&rsquo;s talk
+          </Link>
         </div>
+      </div>
 
-        <div className="relative">
-          <div
-            className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[linear-gradient(135deg,var(--color-orange)_0%,var(--color-peach)_100%)] opacity-90 blur-2xl"
-            aria-hidden="true"
-          />
-
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#1d1d1d] shadow-2xl">
-            <div className="flex items-center gap-1.5 border-b border-white/10 bg-[#232323] px-4 py-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-              <span className="ml-3 h-5 flex-1 rounded-full bg-white/5" />
-            </div>
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <img
-                src="/site-preview.png"
-                alt="Preview of the Donny Digital homepage hero"
-                className="h-full w-full object-cover object-top"
-              />
-            </div>
-          </div>
-
-          <div className="absolute -left-4 bottom-6 hidden -translate-x-1/2 rounded-xl border border-white/10 bg-charcoal/90 px-4 py-3 shadow-lg backdrop-blur sm:block">
-            <p className="text-xs font-medium uppercase tracking-wide text-white/40">
-              Based in
-            </p>
-            <p className="mt-0.5 text-sm font-semibold text-white">
-              Bratislava, Slovakia
-            </p>
-          </div>
-
-          <div className="absolute -right-4 -top-4 hidden rounded-xl border border-white/10 bg-charcoal/90 px-4 py-3 shadow-lg backdrop-blur sm:block">
-            <p className="flex items-center gap-2 text-sm font-semibold text-white">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange" />
-              Design + Development
-            </p>
-          </div>
-        </div>
+      <div className="rise-in mx-auto mt-16 max-w-5xl px-4 md:mt-24 md:px-6" style={{ "--d": "1000ms" } as CSSProperties}>
+        <HeroConsole />
       </div>
     </section>
   );
