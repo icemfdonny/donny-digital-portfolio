@@ -220,6 +220,7 @@ export default function Navbar() {
 
                 {item.menu && (
                   <div
+                    data-menu-closed={menu === item.menu ? undefined : ""}
                     className={`absolute left-0 top-full pt-5 transition-all duration-300 ${
                       menu === item.menu ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
                     }`}

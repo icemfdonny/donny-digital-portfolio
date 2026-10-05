@@ -85,7 +85,7 @@ function CodePane({ typed }: { typed: number }) {
         <span className="border-b border-white px-4 py-2 text-white">Home.tsx</span>
         <span className="px-4 py-2 text-dim">tokens.css</span>
       </div>
-      <pre className="min-h-[286px] overflow-hidden px-3 py-4 font-mono text-[10.5px] leading-[22px] sm:text-xs sm:leading-[22px]">
+      <pre className="min-h-[296px] overflow-hidden px-3 py-4 font-mono text-[10.5px] leading-[22px] sm:text-xs sm:leading-[22px]">
         {LINES.map((_, i) => (
           <CodeLineView
             key={i}
@@ -169,6 +169,8 @@ const Preview = memo(function Preview({
         </div>
 
         <div className="relative space-y-3 p-3">
+          {/* First child on purpose: space-y adds margin to every non-last child, so mounting this last made the panel jump 12px. */}
+          {building && <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-1/3 animate-scan bg-gradient-to-b from-white/12 to-transparent" />}
           <PreviewBlock show={nav} className="h-6">
             <div className="flex h-full items-center justify-between">
               <LogoMark className="h-3.5" />
@@ -213,7 +215,6 @@ const Preview = memo(function Preview({
             </div>
           </PreviewBlock>
 
-          {building && <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 animate-scan bg-gradient-to-b from-white/12 to-transparent" />}
         </div>
       </div>
     </div>
@@ -323,36 +324,33 @@ export default function HeroConsole() {
     >
       <div className="pointer-events-none absolute -inset-x-16 -bottom-16 top-1/2 -z-10 rounded-full bg-white/[0.07] blur-3xl" />
 
-      <div>
-        <div className="beam rounded-2xl bg-panel/90 shadow-[0_40px_120px_-30px_rgba(255,255,255,0.18)] ring-1 ring-white/10 backdrop-blur">
-          <div>
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <div className="flex gap-1.5">
-                <span className="size-2.5 rounded-full bg-white/20" />
-                <span className="size-2.5 rounded-full bg-white/12" />
-                <span className="size-2.5 rounded-full bg-white/8" />
-              </div>
-              <p className="font-mono text-[11px] text-dim">donny-digital — studio</p>
-              <p className="flex items-center gap-1.5 font-mono text-[11px] text-dim">
-                <span className={`size-1.5 rounded-full ${live ? "bg-white shadow-[0_0_10px_2px_rgba(255,255,255,0.8)]" : "bg-white/25"}`} />
-                {live ? "live" : "draft"}
-              </p>
-            </div>
-
-            <div className={`grid transition-opacity duration-500 md:grid-cols-[1.05fr_1fr] ${fade ? "opacity-0" : "opacity-100"}`}>
-              <CodePane typed={typed} />
-              <Preview
-                nav={typed >= REVEAL_AT("nav")}
-                hero={typed >= REVEAL_AT("hero")}
-                work={typed >= REVEAL_AT("work")}
-                contact={typed >= REVEAL_AT("contact")}
-                building={building}
-              />
-            </div>
-
-            <StatusBar log={log} live={live} building={building} done={done} />
+      {/* Static outline: no animated border and no backdrop blur, both of which repainted the whole panel every frame. */}
+      <div className="rounded-2xl bg-panel shadow-[0_40px_120px_-30px_rgba(255,255,255,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/15">
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <div className="flex gap-1.5">
+            <span className="size-2.5 rounded-full bg-white/20" />
+            <span className="size-2.5 rounded-full bg-white/12" />
+            <span className="size-2.5 rounded-full bg-white/8" />
           </div>
+          <p className="font-mono text-[11px] text-dim">donny-digital — studio</p>
+          <p className="flex items-center gap-1.5 font-mono text-[11px] text-dim">
+            <span className={`size-1.5 rounded-full ${live ? "bg-white shadow-[0_0_10px_2px_rgba(255,255,255,0.8)]" : "bg-white/25"}`} />
+            {live ? "live" : "draft"}
+          </p>
         </div>
+
+        <div className={`grid transition-opacity duration-500 md:grid-cols-[1.05fr_1fr] ${fade ? "opacity-0" : "opacity-100"}`}>
+          <CodePane typed={typed} />
+          <Preview
+            nav={typed >= REVEAL_AT("nav")}
+            hero={typed >= REVEAL_AT("hero")}
+            work={typed >= REVEAL_AT("work")}
+            contact={typed >= REVEAL_AT("contact")}
+            building={building}
+          />
+        </div>
+
+        <StatusBar log={log} live={live} building={building} done={done} />
       </div>
     </div>
   );
