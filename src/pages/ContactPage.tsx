@@ -24,16 +24,39 @@ export default function ContactPage() {
   usePageMeta("Contact — Donny Digital", "Have an idea? Get in touch with Donny Digital to start a project.");
   const { copied, copy } = useCopyEmail();
   const [topic, setTopic] = useState(TOPICS[0]);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [sentTo, setSentTo] = useState({ name: "", email: "" });
+  const [fallbackHref, setFallbackHref] = useState("");
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const name = String(f.get("name") ?? "");
-    const from = String(f.get("email") ?? "");
-    const message = String(f.get("message") ?? "");
-    const subject = `${topic} — ${name}`;
-    const body = `${message}\n\n— ${name}\n${from}`;
-    window.location.href = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (status === "sending") return;
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const name = String(f.get("name") ?? "").trim();
+    const from = String(f.get("email") ?? "").trim();
+    const message = String(f.get("message") ?? "").trim();
+
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // "company" is a hidden spam trap: people leave it empty, bots fill it in.
+        body: JSON.stringify({ name, email: from, topic, message, company: String(f.get("company") ?? "") }),
+      });
+      if (!res.ok) throw new Error(`Contact form request failed (${res.status})`);
+      form.reset();
+      setTopic(TOPICS[0]);
+      setSentTo({ name, email: from });
+      setStatus("sent");
+    } catch {
+      // Sending failed (offline, server down, ...): keep what they typed and offer their own email app instead.
+      const subject = `${topic} — ${name}`;
+      const body = `${message}\n\n— ${name}\n${from}`;
+      setFallbackHref(`mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+      setStatus("error");
+    }
   };
 
   const field =
@@ -84,64 +107,105 @@ export default function ContactPage() {
             </div>
           </Reveal>
 
-          <Reveal delay={100}>
-            <form onSubmit={onSubmit} className={CARD}>
-              <div className="relative">
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Your name</span>
-                    <input name="name" required autoComplete="name" placeholder="Jane Doe" className={field} />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Your email</span>
-                    <input name="email" type="email" required autoComplete="email" placeholder="jane@company.com" className={field} />
-                  </label>
-                </div>
-
-                <fieldset className="mt-6">
-                  <legend className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">What do you need?</legend>
-                  <div className="flex flex-wrap gap-2">
-                    {TOPICS.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        aria-pressed={topic === t}
-                        onClick={() => setTopic(t)}
-                        className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                          topic === t
-                            ? "border-black bg-black text-white"
-                            : "border-black/15 bg-black/[0.03] text-black/70 hover:border-black/40 hover:text-black"
-                        }`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <label className="mt-6 block">
-                  <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Tell me about the project</span>
-                  <textarea
-                    name="message"
-                    required
-                    rows={6}
-                    placeholder="What are you building, who is it for, and when would you like to launch?"
-                    className={`${field} resize-y`}
-                  />
-                </label>
-
-                <div className="mt-7 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                  <p className="max-w-xs text-xs leading-relaxed text-black/50">Sending opens your email app with this message ready to go.</p>
+          <Reveal delay={100} className="h-full">
+            {status === "sent" ? (
+              <div role="status" className={`${CARD} flex h-full min-h-[26rem] flex-col items-center justify-center text-center`}>
+                <div className="relative flex flex-col items-center">
+                  <span className="grid size-14 place-items-center rounded-full bg-black text-white">
+                    <CheckIcon className="size-6" />
+                  </span>
+                  <h2 className="mt-7 font-display text-2xl leading-snug md:text-3xl">Message sent</h2>
+                  <p className="mt-4 max-w-sm leading-relaxed text-black/60">
+                    Thanks{sentTo.name ? `, ${sentTo.name.split(" ")[0]}` : ""}. I&rsquo;ll reply to {sentTo.email} as soon as I can.
+                  </p>
                   <button
-                    type="submit"
-                    className="inline-flex items-center gap-3 rounded-full bg-black px-7 py-3.5 text-sm font-medium text-white shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-0.5"
+                    type="button"
+                    onClick={() => setStatus("idle")}
+                    className="mt-8 inline-flex items-center rounded-full border border-black/15 px-6 py-3 text-sm font-medium text-black transition-colors hover:border-black/40 hover:bg-black/5"
                   >
-                    Compose email
-                    <ArrowUpRightIcon className="size-4" />
+                    Send another message
                   </button>
                 </div>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={onSubmit} className={CARD}>
+                <div className="relative">
+                  {/* Hidden spam trap, see onSubmit. */}
+                  <input
+                    type="text"
+                    name="company"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -left-[9999px] size-px opacity-0"
+                  />
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Your name</span>
+                      <input name="name" required autoComplete="name" placeholder="Jane Doe" className={field} />
+                    </label>
+                    <label className="block">
+                      <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Your email</span>
+                      <input name="email" type="email" required autoComplete="email" placeholder="jane@company.com" className={field} />
+                    </label>
+                  </div>
+
+                  <fieldset className="mt-6">
+                    <legend className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">What do you need?</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {TOPICS.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          aria-pressed={topic === t}
+                          onClick={() => setTopic(t)}
+                          className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                            topic === t
+                              ? "border-black bg-black text-white"
+                              : "border-black/15 bg-black/[0.03] text-black/70 hover:border-black/40 hover:text-black"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <label className="mt-6 block">
+                    <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Tell me about the project</span>
+                    <textarea
+                      name="message"
+                      required
+                      rows={6}
+                      placeholder="What are you building, who is it for, and when would you like to launch?"
+                      className={`${field} resize-y`}
+                    />
+                  </label>
+
+                  {status === "error" && (
+                    <div role="alert" className="mt-6 rounded-xl border border-black/20 bg-black/[0.04] px-4 py-3 text-sm leading-relaxed text-black">
+                      Your message couldn&rsquo;t be sent just now. Try again, or{" "}
+                      <a href={fallbackHref} className="font-medium underline underline-offset-2">
+                        open it in your email app
+                      </a>{" "}
+                      instead.
+                    </div>
+                  )}
+
+                  <div className="mt-7 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                    <p className="max-w-xs text-xs leading-relaxed text-black/50">Your message goes straight to my inbox.</p>
+                    <button
+                      type="submit"
+                      disabled={status === "sending"}
+                      className="inline-flex items-center gap-3 rounded-full bg-black px-7 py-3.5 text-sm font-medium text-white shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0"
+                    >
+                      {status === "sending" ? "Sending…" : "Send message"}
+                      {status !== "sending" && <ArrowUpRightIcon className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
           </Reveal>
         </div>
       </section>
