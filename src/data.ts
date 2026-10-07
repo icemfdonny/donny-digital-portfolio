@@ -1,4 +1,4 @@
-export const EMAIL = "dalog.darien@gmail.com";
+export const EMAIL = "donnydigital.darien@gmail.com";
 
 export const SOCIALS = [
   { label: "GitHub", href: "https://github.com/" },
