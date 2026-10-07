@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   if (!name || name.length > 100) return reply({ error: "invalid_name" }, 400);
   if (!EMAIL_PATTERN.test(email) || email.length > 200) return reply({ error: "invalid_email" }, 400);
   if (!TOPICS.includes(topic)) return reply({ error: "invalid_topic" }, 400);
-  if (message.length < 10 || message.length > 5000) return reply({ error: "invalid_message" }, 400);
+  if (!message || message.length > 5000) return reply({ error: "invalid_message" }, 400);
 
   const apiKey = envValue("RESEND_API_KEY");
   const to = envValue("CONTACT_TO_EMAIL");

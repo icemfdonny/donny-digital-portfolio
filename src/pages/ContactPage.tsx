@@ -7,6 +7,14 @@ import { Reveal } from "../components/ui";
 
 const TOPICS = ["New website", "Redesign", "Design system", "Brand & identity", "Something else"];
 
+/** What to tell the visitor when the server rejects the input (error codes from api/contact.ts). */
+const REJECTIONS: Record<string, string> = {
+  invalid_name: "Please enter your name (up to 100 characters).",
+  invalid_email: "That email address doesn\u2019t look right. Please check it and try again.",
+  invalid_message: "Please write a message (up to 5,000 characters).",
+  rate_limited: "Several messages were sent from your connection recently. Please try again in a few minutes.",
+};
+
 /** Same light card as the "Have an idea?" call to action: black on white, with the film-grain tile (no filters or blend modes). */
 const CARD =
   "noise relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-white to-[#cfcfcf] p-7 text-black md:rounded-[2.5rem] md:p-10";
@@ -27,6 +35,7 @@ export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [sentTo, setSentTo] = useState({ name: "", email: "" });
   const [fallbackHref, setFallbackHref] = useState("");
+  const [rejection, setRejection] = useState("");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,7 +54,17 @@ export default function ContactPage() {
         // "company" is a hidden spam trap: people leave it empty, bots fill it in.
         body: JSON.stringify({ name, email: from, topic, message, company: String(f.get("company") ?? "") }),
       });
-      if (!res.ok) throw new Error(`Contact form request failed (${res.status})`);
+      if (!res.ok) {
+        const code = await res.json().then((j: { error?: unknown }) => String(j.error ?? ""), () => "");
+        const reason = REJECTIONS[code];
+        if (reason) {
+          // The input was refused: say why and keep what they typed, no email-app fallback needed.
+          setRejection(reason);
+          setStatus("error");
+          return;
+        }
+        throw new Error(`Contact form request failed (${res.status})`);
+      }
       form.reset();
       setTopic(TOPICS[0]);
       setSentTo({ name, email: from });
@@ -55,6 +74,7 @@ export default function ContactPage() {
       const subject = `${topic} — ${name}`;
       const body = `${message}\n\n— ${name}\n${from}`;
       setFallbackHref(`mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+      setRejection("");
       setStatus("error");
     }
   };
@@ -142,11 +162,11 @@ export default function ContactPage() {
                   <div className="grid gap-5 sm:grid-cols-2">
                     <label className="block">
                       <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Your name</span>
-                      <input name="name" required autoComplete="name" placeholder="Jane Doe" className={field} />
+                      <input name="name" required maxLength={100} autoComplete="name" placeholder="Jane Doe" className={field} />
                     </label>
                     <label className="block">
                       <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-black/50">Your email</span>
-                      <input name="email" type="email" required autoComplete="email" placeholder="jane@company.com" className={field} />
+                      <input name="email" type="email" required maxLength={200} autoComplete="email" placeholder="jane@company.com" className={field} />
                     </label>
                   </div>
 
@@ -176,6 +196,7 @@ export default function ContactPage() {
                     <textarea
                       name="message"
                       required
+                      maxLength={5000}
                       rows={6}
                       placeholder="What are you building, who is it for, and when would you like to launch?"
                       className={`${field} resize-y`}
@@ -184,11 +205,15 @@ export default function ContactPage() {
 
                   {status === "error" && (
                     <div role="alert" className="mt-6 rounded-xl border border-black/20 bg-black/[0.04] px-4 py-3 text-sm leading-relaxed text-black">
-                      Your message couldn&rsquo;t be sent just now. Try again, or{" "}
-                      <a href={fallbackHref} className="font-medium underline underline-offset-2">
-                        open it in your email app
-                      </a>{" "}
-                      instead.
+                      {rejection || (
+                        <>
+                          Your message couldn&rsquo;t be sent just now. Try again, or{" "}
+                          <a href={fallbackHref} className="font-medium underline underline-offset-2">
+                            open it in your email app
+                          </a>{" "}
+                          instead.
+                        </>
+                      )}
                     </div>
                   )}
 
