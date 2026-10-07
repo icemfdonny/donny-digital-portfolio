@@ -38,7 +38,7 @@ export default function ProjectPage() {
               <ProjectArt slug={project.slug} />
             </div>
             <span className="absolute left-6 top-6 font-mono text-[11px] tracking-widest text-white/40">{project.index}</span>
-            <span className="absolute right-6 top-6 rounded-full border border-white/15 bg-black/40 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-widest text-neutral-300 backdrop-blur">
+            <span className="absolute right-6 top-6 rounded-full border border-white/15 bg-black/65 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-widest text-neutral-300">
               {project.year}
             </span>
           </div>

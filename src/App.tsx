@@ -39,6 +39,8 @@ export default function App() {
         Skip to content
       </a>
       <ScrollManager />
+      {/* 24px marker at the very top of the page: the navbar watches it instead of listening to scroll events */}
+      <div id="top-sentinel" aria-hidden="true" className="pointer-events-none absolute left-0 top-0 h-6 w-px" />
       <Navbar />
       <main id="main" key={pathname} className="page-in">
         <Routes>

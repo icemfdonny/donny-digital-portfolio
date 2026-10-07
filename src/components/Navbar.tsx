@@ -108,7 +108,6 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState<MenuKey | null>(null);
-  const bar = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number | undefined>(undefined);
   const list = useRef<HTMLUListElement>(null);
 
@@ -150,42 +149,31 @@ export default function Navbar() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  // "Scrolled" comes from an observer on a 24px sentinel at the top of the page (see App), so there is no scroll handler.
   useEffect(() => {
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const p = max > 0 ? Math.min(1, window.scrollY / max) : 0;
-      if (bar.current) bar.current.style.transform = `scaleX(${p})`;
-      setScrolled(window.scrollY > 24);
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [pathname]);
+    const sentinel = document.getElementById("top-sentinel");
+    if (!sentinel) return;
+    const io = new IntersectionObserver(([entry]) => setScrolled(!entry.isIntersecting));
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, []);
 
   const solid = scrolled || mobileOpen || menu !== null;
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-6 md:pt-5">
-      <div ref={bar} className="absolute inset-x-0 top-0 h-px origin-left scale-x-0 bg-white/70" aria-hidden="true" />
-
       <nav
         aria-label="Primary"
-        className={`mx-auto flex max-w-6xl items-center justify-between rounded-full border py-2 pl-5 pr-2 transition-all duration-500 ${
-          solid
-            ? "border-white/10 bg-black/75 shadow-[0_10px_50px_-15px_rgba(0,0,0,1)] backdrop-blur-xl"
-            : "border-transparent bg-transparent"
-        }`}
+        className="relative isolate mx-auto flex max-w-6xl items-center justify-between rounded-full border border-transparent py-2 pl-5 pr-2"
       >
+        {/* The pill is its own layer that only fades in. A backdrop blur plus transition-all re-blurred the page under the bar
+            and repainted the shadow on every frame of the first scroll, which was the lag when leaving the hero. */}
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute -inset-px -z-10 rounded-full border border-white/10 bg-black/[0.98] shadow-[0_10px_50px_-15px_rgba(0,0,0,1)] transition-opacity duration-500 ${
+            solid ? "opacity-100" : "opacity-0"
+          }`}
+        />
         <div className="flex items-center gap-3 lg:gap-6">
           <Link to="/" aria-label="Donny-Digital — home" className="flex items-center">
             <Logo className="h-5 md:h-6" />
@@ -225,7 +213,7 @@ export default function Navbar() {
                       menu === item.menu ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0"
                     }`}
                   >
-                    <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/[0.97] shadow-[0_30px_80px_-20px_rgba(0,0,0,1),0_0_0_1px_rgba(255,255,255,0.03)] backdrop-blur-2xl">
+                    <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/[0.97] shadow-[0_30px_80px_-20px_rgba(0,0,0,1),0_0_0_1px_rgba(255,255,255,0.03)]">
                       {item.menu === "work" ? <WorkPanel onNavigate={closeMenu} /> : <ServicesPanel onNavigate={closeMenu} />}
                     </div>
                   </div>
@@ -255,7 +243,7 @@ export default function Navbar() {
       <div
         id="mobile-menu"
         inert={!mobileOpen}
-        className={`mx-auto mt-2 max-h-[calc(100dvh-5.5rem)] max-w-6xl origin-top overflow-y-auto rounded-3xl border border-white/10 bg-black/90 p-3 backdrop-blur-xl transition-[transform,opacity] duration-300 md:hidden ${
+        className={`mx-auto mt-2 max-h-[calc(100dvh-5.5rem)] max-w-6xl origin-top overflow-y-auto rounded-3xl border border-white/10 bg-black p-3 transition-[transform,opacity] duration-300 md:hidden ${
           mobileOpen ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
         }`}
       >

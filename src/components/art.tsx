@@ -128,7 +128,7 @@ function DirectionVisual() {
         "left-10 top-0 animate-float [animation-delay:-2s]",
         "left-20 top-2 animate-float [animation-delay:-4s]",
       ].map((c, i) => (
-        <span key={i} className={`absolute size-[4.5rem] rounded-full border border-white/40 bg-white/[0.08] mix-blend-screen ${c}`} />
+        <span key={i} className={`absolute size-[4.5rem] rounded-full border border-white/40 bg-white/[0.08] ${c}`} />
       ))}
     </div>
   );
@@ -138,11 +138,11 @@ function SystemVisual() {
   return (
     <div className="relative h-20 w-28">
       {[
-        "left-0 top-0 group-hover/cap:-translate-x-2 group-hover/cap:-translate-y-2 border-white/20 bg-white/[0.04]",
-        "left-3 top-3 border-white/30 bg-white/[0.07]",
-        "left-6 top-6 group-hover/cap:translate-x-2 group-hover/cap:translate-y-2 border-white/60 bg-white/10",
+        "left-0 top-0 group-hover/cap:-translate-x-2 group-hover/cap:-translate-y-2 border-white/20 bg-[#141414]",
+        "left-3 top-3 border-white/30 bg-[#1b1b1b]",
+        "left-6 top-6 group-hover/cap:translate-x-2 group-hover/cap:translate-y-2 border-white/60 bg-[#222]",
       ].map((c, i) => (
-        <span key={i} className={`absolute size-14 rounded-xl border backdrop-blur-sm transition-transform duration-500 ${c}`} />
+        <span key={i} className={`absolute size-14 rounded-xl border transition-transform duration-500 ${c}`} />
       ))}
     </div>
   );

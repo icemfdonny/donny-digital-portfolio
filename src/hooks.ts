@@ -50,26 +50,74 @@ export function useInView<T extends Element>(
 }
 
 /**
- * 0 to 1 as the element scrolls through the viewport. Only listens to scroll while the element is
- * within about one screen of the viewport, so it costs nothing the rest of the time.
+ * One shared IntersectionObserver per kind reveals every `.reveal` element by setting a data attribute, so a reveal never
+ * causes a React render. Small and medium elements fade up as they scroll in. Big blocks (over ~200,000px2 and taller than 400px, e.g. the About
+ * photo card or the closing call-to-action) are not animated at all: fading a surface that large made Firefox build one
+ * big off-screen surface the moment it scrolled in, a visible ~80ms hitch. They are switched on instantly while still a
+ * little below the screen edge, so nobody sees them pop in.
  */
-export function useScrollProgress<T extends HTMLElement>(): [RefObject<T | null>, number] {
+// "Big" means large and tall (the photo card is about 540px high, the CTA about 590px); wide text headings stay animated.
+const isBigReveal = (el: HTMLElement) => el.offsetWidth * el.offsetHeight > 200_000 && el.offsetHeight > 400;
+let revealObserver: IntersectionObserver | null = null;
+let bigRevealObserver: IntersectionObserver | null = null;
+
+export function observeReveal(el: HTMLElement) {
+  if (isBigReveal(el)) {
+    bigRevealObserver ??= new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.setAttribute("data-instant", "");
+          entry.target.setAttribute("data-in", "");
+          bigRevealObserver?.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "0px 0px 30% 0px" },
+    );
+    bigRevealObserver.observe(el);
+    return () => bigRevealObserver?.unobserve(el);
+  }
+  revealObserver ??= new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.setAttribute("data-in", "");
+        revealObserver?.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.12 },
+  );
+  revealObserver.observe(el);
+  return () => revealObserver?.unobserve(el);
+}
+/**
+ * Calls onProgress(0..1) as the element scrolls through the viewport, writing straight to the DOM (no React state, so
+ * scrolling never re-renders the component). It only listens to scroll while the element is within about one screen
+ * of the viewport, so it costs nothing the rest of the time.
+ */
+export function useScrollProgress<T extends HTMLElement>(onProgress: (p: number, el: T) => void): RefObject<T | null> {
   const ref = useRef<T | null>(null);
-  const [steps, setSteps] = useState(0);
+  const callback = useRef(onProgress);
+  useEffect(() => {
+    callback.current = onProgress;
+  });
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     let raf = 0;
     let listening = false;
+    let last = -1;
 
     const update = () => {
       raf = 0;
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
       const span = Math.max(r.height * 0.85, vh * 0.5);
-      const p = Math.min(1, Math.max(0, (vh * 0.8 - r.top) / span));
-      setSteps(Math.round(p * 100));
+      const p = Math.round(Math.min(1, Math.max(0, (vh * 0.8 - r.top) / span)) * 200) / 200;
+      if (p === last) return;
+      last = p;
+      callback.current(p, el);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -98,22 +146,25 @@ export function useScrollProgress<T extends HTMLElement>(): [RefObject<T | null>
     };
   }, []);
 
-  return [ref, steps / 100];
+  return ref;
 }
-
 const ANIMATION_SCOPES = 'main section, main header, footer, [class~="group/card"], [class~="group/cap"]';
 
 /**
- * Pauses every CSS animation inside sections/cards that are off-screen (the matching rule lives in
- * index.css under [data-offscreen]), so only what you can actually see keeps animating.
+ * Pauses the CSS animations inside sections/cards that are off-screen, so only what you can actually see keeps animating.
+ * It sets animation-play-state directly on the few elements that animate (anything with an animate-* class). The earlier
+ * version put an attribute on the whole section and used a `*` rule, which made the browser restyle every element in the
+ * section each time one entered or left the screen: single 20-40ms hitches in the middle of a scroll.
  */
 export function useOffscreenAnimationPause(routeKey: string) {
   useEffect(() => {
     const io = new IntersectionObserver(
       (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) e.target.removeAttribute("data-offscreen");
-          else e.target.setAttribute("data-offscreen", "");
+        for (const entry of entries) {
+          const state = entry.isIntersecting ? "" : "paused";
+          entry.target.querySelectorAll<HTMLElement>('[class*="animate-"]').forEach((el) => {
+            el.style.animationPlayState = state;
+          });
         }
       },
       { rootMargin: "80px 0px" },
@@ -121,11 +172,12 @@ export function useOffscreenAnimationPause(routeKey: string) {
     document.querySelectorAll(ANIMATION_SCOPES).forEach((el) => io.observe(el));
     return () => {
       io.disconnect();
-      document.querySelectorAll("[data-offscreen]").forEach((el) => el.removeAttribute("data-offscreen"));
+      document.querySelectorAll<HTMLElement>('[class*="animate-"]').forEach((el) => {
+        el.style.animationPlayState = "";
+      });
     };
   }, [routeKey]);
 }
-
 export function useCopyEmail() {
   const [copied, setCopied] = useState(false);
   const copy = async () => {

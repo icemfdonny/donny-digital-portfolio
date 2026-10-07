@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useInView, useReducedMotion } from "../hooks";
 import { CheckIcon } from "./icons";
 import { LogoMark } from "./Logo";
@@ -259,19 +259,34 @@ export default function HeroConsole() {
   const [done, setDone] = useState(reduced ? 3 : 0);
   const [fade, setFade] = useState(false);
 
-  // The animation freezes while the pointer is over the console and picks up where it left off.
+  // The animation freezes while the pointer is over the console, and while the page is scrolling (the typing re-renders
+  // React about 12 times a second, which competes with the scroll); it picks up where it left off.
+  const hovering = useRef(false);
+  const scrolling = useRef(false);
   const paused = useRef(false);
   const resumeWaiters = useRef<(() => void)[]>([]);
-  const setPaused = (value: boolean) => {
-    paused.current = value;
-    if (!value) resumeWaiters.current.splice(0).forEach((resume) => resume());
-  };
+  const sync = useCallback(() => {
+    paused.current = hovering.current || scrolling.current;
+    if (!paused.current) resumeWaiters.current.splice(0).forEach((resume) => resume());
+  }, []);
 
   useEffect(() => {
     if (reduced || !inView) return;
     let cancelled = false;
     const timers: number[] = [];
-    paused.current = wrapRef.current?.matches(":hover") ?? false;
+    hovering.current = wrapRef.current?.matches(":hover") ?? false;
+    sync();
+    let scrollTimer = 0;
+    const onScroll = () => {
+      scrolling.current = true;
+      sync();
+      window.clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(() => {
+        scrolling.current = false;
+        sync();
+      }, 200);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     const wait = async (ms: number) => {
       await new Promise<void>((res) => {
         timers.push(window.setTimeout(res, ms));
@@ -305,8 +320,11 @@ export default function HeroConsole() {
       cancelled = true;
       timers.forEach(clearTimeout);
       resumeWaiters.current = [];
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(scrollTimer);
+      scrolling.current = false;
     };
-  }, [inView, reduced, wrapRef]);
+  }, [inView, reduced, wrapRef, sync]);
 
   const typing = typed < TOTAL;
   const building = !typing && done < 3;
@@ -319,8 +337,14 @@ export default function HeroConsole() {
       role="img"
       aria-label="Animated preview of a website being written, built and deployed"
       className="relative"
-      onPointerEnter={() => setPaused(true)}
-      onPointerLeave={() => setPaused(false)}
+      onPointerEnter={() => {
+        hovering.current = true;
+        sync();
+      }}
+      onPointerLeave={() => {
+        hovering.current = false;
+        sync();
+      }}
     >
       <div className="pointer-events-none absolute -inset-x-16 -bottom-16 top-1/2 -z-10 rounded-full bg-white/[0.07] blur-3xl" />
 

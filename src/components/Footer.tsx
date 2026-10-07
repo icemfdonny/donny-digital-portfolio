@@ -17,7 +17,7 @@ const headClass = "font-mono text-[11px] uppercase tracking-[0.2em] text-dim";
 
 export default function Footer() {
   return (
-    <footer className="cv-auto relative overflow-hidden border-t border-white/10">
+    <footer className="relative overflow-hidden border-t border-white/10">
       <div className="mx-auto grid max-w-6xl gap-12 px-6 pb-10 pt-16 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div className="sm:col-span-2 md:col-span-1">
           <Link to="/" aria-label="Donny-Digital — home">

@@ -170,15 +170,21 @@ body {
   background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+.dots-bg-dark {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.14) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
 
+/* Film grain: a small pre-rendered tile. The old version generated noise with an SVG feTurbulence filter and blended it
+   with mix-blend-mode: overlay, which was the single most expensive thing to paint on the whole page (about a third of the
+   GPU raster time during a scroll). */
 .noise::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.07;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("/brand/grain.png");
+  background-size: 128px 128px;
 }
 
 .mask-fade-x {
@@ -230,27 +236,21 @@ body {
 
 /* ---------- Scroll reveal ---------- */
 
+/* Shorter and set by a data attribute (see observeReveal): every running transition costs style work on each scrolled frame. */
 .reveal {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(24px);
   transition:
-    opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
-    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+    opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
   transition-delay: var(--d, 0ms);
 }
-.reveal.is-in {
+.reveal[data-in] {
   opacity: 1;
   transform: none;
 }
-
-/* Animations inside off-screen sections are paused (toggled by useOffscreenAnimationPause). */
-[data-offscreen],
-[data-offscreen]::before,
-[data-offscreen]::after,
-[data-offscreen] *,
-[data-offscreen] *::before,
-[data-offscreen] *::after {
-  animation-play-state: paused !important;
+.reveal[data-instant] {
+  transition: none;
 }
 
 /* Nav dropdowns stay mounted while closed; their decorative animations (e.g. the orbit preview) must not keep running. */
@@ -259,12 +259,6 @@ body {
 [data-menu-closed] *::before,
 [data-menu-closed] *::after {
   animation-play-state: paused !important;
-}
-
-/* Below-the-fold sections skip layout/paint until they are close to the viewport. */
-.cv-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 760px;
 }
 
 @layer components {
@@ -373,7 +367,6 @@ body {
   background: rgba(255, 255, 255, 0.03);
   color: #ededed;
   font-weight: 500;
-  backdrop-filter: blur(8px);
   transition:
     background 0.25s,
     border-color 0.25s,

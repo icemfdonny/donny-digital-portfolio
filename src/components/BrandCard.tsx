@@ -14,7 +14,7 @@ export default function BrandCard({ className = "" }: { className?: string }) {
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
-          <span className="absolute left-5 top-5 rounded-full border border-white/15 bg-black/50 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-200 backdrop-blur">
+          <span className="absolute left-5 top-5 rounded-full border border-white/15 bg-black/70 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-200">
             Design + Development
           </span>
           <figcaption className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6">

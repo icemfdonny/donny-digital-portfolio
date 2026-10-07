@@ -14,7 +14,7 @@ export default function ProjectCard({ project: p, span = "", delay = 0 }: { proj
             <ProjectArt slug={p.slug} />
           </div>
           <span className="absolute left-5 top-5 font-mono text-[11px] tracking-widest text-white/40">{p.index}</span>
-          <span className="absolute right-5 top-5 rounded-full border border-white/15 bg-black/40 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-300 backdrop-blur">
+          <span className="absolute right-5 top-5 rounded-full border border-white/15 bg-black/65 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-300">
             {p.year}
           </span>
           <span className="absolute bottom-5 right-5 grid size-11 translate-y-2 place-items-center rounded-full bg-white text-black opacity-0 transition-all duration-300 group-hover/card:translate-y-0 group-hover/card:opacity-100">

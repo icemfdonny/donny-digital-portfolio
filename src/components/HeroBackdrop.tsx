@@ -9,7 +9,9 @@ const BLADES = [
 
 export default function HeroBackdrop() {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+    // will-change keeps the backdrop on its own cached layer. Without it, Firefox re-renders the masked light blades across
+    // the whole 2560px-wide hero on every frame in which anything else in the hero animates (about 3fps on a 1440p screen).
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden will-change-transform">
       <div className="absolute left-1/2 top-[-18%] h-[80%] w-[120%] -translate-x-1/2 bg-[radial-gradient(ellipse_50%_55%_at_50%_0%,rgba(255,255,255,0.22),rgba(255,255,255,0.05)_46%,transparent_72%)]" />
 
       <div className="grid-bg absolute inset-0" />

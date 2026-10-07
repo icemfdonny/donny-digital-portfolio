@@ -9,16 +9,18 @@ export default function CtaCard() {
   const { copied, copy } = useCopyEmail();
 
   return (
-    <section className="cv-auto relative px-4 pb-24 pt-8 md:px-6 md:pb-32">
+    <section className="relative px-4 pb-24 pt-8 md:px-6 md:pb-32">
       <Reveal>
         <div className="noise relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gradient-to-b from-white to-[#cfcfcf] px-6 py-20 text-center text-black md:rounded-[2.5rem] md:px-16 md:py-28">
+          {/* Dark versions of the watermark and dot pattern are used as-is instead of inverting the white ones with a CSS filter:
+              the first time a large filtered element reached the screen, Firefox needed ~130ms to build it. */}
           <img
-            src="/brand/mark.png"
+            src="/brand/mark-dark.png"
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-24 -right-16 w-[26rem] invert opacity-[0.06] md:-right-10 md:w-[40rem]"
+            className="pointer-events-none absolute -bottom-24 -right-16 w-[26rem] opacity-[0.06] md:-right-10 md:w-[40rem]"
           />
-          <div className="dots-bg pointer-events-none absolute inset-0 opacity-40 invert [mask-image:radial-gradient(ellipse_at_center,#000_20%,transparent_75%)]" />
+          <div className="dots-bg-dark pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_at_center,#000_20%,transparent_75%)]" />
 
           <div className="relative">
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-black/50">Contact</p>

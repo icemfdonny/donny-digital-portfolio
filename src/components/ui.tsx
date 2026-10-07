@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { Link } from "react-router-dom";
-import { useInView, useReducedMotion } from "../hooks";
+import { observeReveal, useInView, useReducedMotion } from "../hooks";
 import { ArrowRightIcon } from "./icons";
 
 export function ArrowLink({ to, children, className = "" }: { to: string; children: ReactNode; className?: string }) {
@@ -35,15 +35,16 @@ export function Reveal({
   className?: string;
   as?: ElementType;
 }) {
-  const [ref, inView] = useInView<HTMLElement>({ threshold: 0.12 });
-  return createElement(
-    as,
-    {
-      ref,
-      className: `reveal ${inView ? "is-in" : ""} ${className}`,
-      style: { "--d": `${delay}ms` } as CSSProperties,
-    },
-    children,
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    return el ? observeReveal(el) : undefined;
+  }, []);
+  const Tag = as;
+  return (
+    <Tag ref={ref} className={`reveal ${className}`} style={{ "--d": `${delay}ms` } as CSSProperties}>
+      {children}
+    </Tag>
   );
 }
 
@@ -151,30 +152,23 @@ export function SectionHeading({
   children?: ReactNode;
   align?: "left" | "center";
 }) {
+  // One reveal for the whole heading group: three separate transitions per heading made every section start three animations.
   return (
-    <div className={`flex flex-col gap-6 ${align === "center" ? "items-center text-center" : ""}`}>
-      <Reveal>
-        <p className="font-mono text-xs uppercase tracking-[0.22em] text-dim">
-          {index && (
-            <>
-              <span className="text-white/80">{index}</span>
-              <span className="mx-2.5 text-white/20">/</span>
-            </>
-          )}
-          {label}
-        </p>
-      </Reveal>
-      <Reveal delay={80}>
-        <h2 className="-mb-[0.24em] text-balance pb-[0.24em] font-display text-[clamp(1.8rem,4.2vw,3.4rem)] leading-[1.12] tracking-[-0.03em] text-silver">
-          {title}
-        </h2>
-      </Reveal>
-      {children && (
-        <Reveal delay={160}>
-          <p className="max-w-xl text-lg leading-relaxed text-muted">{children}</p>
-        </Reveal>
-      )}
-    </div>
+    <Reveal className={`flex flex-col gap-6 ${align === "center" ? "items-center text-center" : ""}`}>
+      <p className="font-mono text-xs uppercase tracking-[0.22em] text-dim">
+        {index && (
+          <>
+            <span className="text-white/80">{index}</span>
+            <span className="mx-2.5 text-white/20">/</span>
+          </>
+        )}
+        {label}
+      </p>
+      <h2 className="-mb-[0.24em] text-balance pb-[0.24em] font-display text-[clamp(1.8rem,4.2vw,3.4rem)] leading-[1.12] tracking-[-0.03em] text-silver">
+        {title}
+      </h2>
+      {children && <p className="max-w-xl text-lg leading-relaxed text-muted">{children}</p>}
+    </Reveal>
   );
 }
 

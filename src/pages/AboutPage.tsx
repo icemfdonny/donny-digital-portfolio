@@ -91,7 +91,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="cv-auto relative border-t border-white/10 bg-panel py-24 md:py-32">
+      <section className="relative border-t border-white/10 bg-panel py-24 md:py-32">
         <div className="dots-bg pointer-events-none absolute inset-0 opacity-25 [mask-image:radial-gradient(ellipse_70%_50%_at_50%_0%,#000,transparent)]" />
         <div className="relative mx-auto max-w-6xl px-6">
           <SectionHeading label="Principles" title={<>How I like to work</>} />

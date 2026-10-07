@@ -11,7 +11,7 @@ import { ArrowLink, Reveal, SectionHeading, SpotlightCard } from "../components/
 
 function ServicesTeaser() {
   return (
-    <section className="cv-auto relative border-t border-white/10 bg-panel py-28 md:py-36">
+    <section className="relative border-t border-white/10 bg-panel py-28 md:py-36">
       <div className="dots-bg pointer-events-none absolute inset-0 opacity-25 [mask-image:radial-gradient(ellipse_70%_50%_at_50%_0%,#000,transparent)]" />
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
@@ -49,7 +49,7 @@ function ServicesTeaser() {
 
 function AboutTeaser() {
   return (
-    <section className="cv-auto relative overflow-hidden py-28 md:py-36">
+    <section className="relative overflow-hidden py-28 md:py-36">
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid items-center gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
           <BrandCard />
@@ -74,7 +74,7 @@ function AboutTeaser() {
 
 function ProcessTeaser() {
   return (
-    <section className="cv-auto relative border-t border-white/10 py-28 md:py-36">
+    <section className="relative border-t border-white/10 py-28 md:py-36">
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <SectionHeading index="03" label="Process" title={<>How a project comes together</>} />
