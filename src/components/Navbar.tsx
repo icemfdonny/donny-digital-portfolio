@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { PROJECTS, SERVICES } from "../data";
-import { ProjectArt } from "./art";
 import { ArrowRightIcon, CloseIcon, MenuIcon } from "./icons";
 import Logo from "./Logo";
 
@@ -22,8 +21,11 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-function WorkPanel({ onNavigate }: { onNavigate: () => void }) {
+function WorkPanel({ active, onNavigate }: { active: boolean; onNavigate: () => void }) {
   const [preview, setPreview] = useState(PROJECTS[0].slug);
+  // The panel is always mounted (just hidden), so only start fetching screenshots once the menu has been opened.
+  const [seen, setSeen] = useState(false);
+  if (active && !seen) setSeen(true);
   const current = PROJECTS.find((p) => p.slug === preview) ?? PROJECTS[0];
 
   return (
@@ -58,10 +60,17 @@ function WorkPanel({ onNavigate }: { onNavigate: () => void }) {
       </div>
 
       <div className="relative h-[220px] overflow-hidden rounded-xl border border-white/10 bg-panel">
-        <div className="dots-bg absolute inset-0 opacity-30" />
-        <div key={current.slug} className="absolute left-1/2 top-[42%] h-[320px] w-[400px] -translate-x-1/2 -translate-y-1/2 scale-[0.62] animate-[fade-up_0.5s_both]">
-          <ProjectArt slug={current.slug} />
-        </div>
+        {seen && (
+          <img
+            key={current.slug}
+            src={current.cover}
+            alt=""
+            width={1600}
+            height={1000}
+            decoding="async"
+            className="absolute inset-0 size-full animate-[fade-up_0.5s_both] object-cover object-top"
+          />
+        )}
         <p className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent px-4 pb-3 pt-8 font-mono text-[10px] uppercase tracking-widest text-neutral-400">
           {current.category}
         </p>
@@ -214,7 +223,7 @@ export default function Navbar() {
                     }`}
                   >
                     <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/[0.97] shadow-[0_30px_80px_-20px_rgba(0,0,0,1),0_0_0_1px_rgba(255,255,255,0.03)]">
-                      {item.menu === "work" ? <WorkPanel onNavigate={closeMenu} /> : <ServicesPanel onNavigate={closeMenu} />}
+                      {item.menu === "work" ? <WorkPanel active={menu === "work"} onNavigate={closeMenu} /> : <ServicesPanel onNavigate={closeMenu} />}
                     </div>
                   </div>
                 )}

@@ -2,7 +2,6 @@ import { useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { PROJECTS, PROJECT_GROUPS, type Project } from "../data";
 import { usePageMeta } from "../hooks";
-import { ProjectArt } from "../components/art";
 import CtaCard from "../components/CtaCard";
 import { ArrowUpRightIcon } from "../components/icons";
 import PageHeader from "../components/PageHeader";
@@ -12,11 +11,11 @@ import { Reveal } from "../components/ui";
 type View = "grid" | "index";
 
 function spansFor(n: number): string[] {
-  if (n === 1) return ["md:col-span-6"];
+  if (n === 1) return ["md:col-span-4 md:col-start-2"];
   if (n === 2) return ["md:col-span-3", "md:col-span-3"];
-  if (n === 3) return ["md:col-span-4", "md:col-span-2", "md:col-span-6"];
-  const cycle = ["md:col-span-4", "md:col-span-2", "md:col-span-2", "md:col-span-4"];
-  return Array.from({ length: n }, (_, i) => cycle[i % 4]);
+  if (n === 3) return ["md:col-span-3", "md:col-span-3", "md:col-span-6"];
+  // screenshots need cards of one shape (16:10), so larger sets are an even two-column grid
+  return Array.from({ length: n }, () => "md:col-span-3");
 }
 
 function GridIcon() {
@@ -38,9 +37,10 @@ function ListIcon() {
   );
 }
 
-/** Editorial index: big rows, with a live art preview that follows the cursor. */
+/** Editorial index: big rows, with a screenshot preview that follows the cursor. */
 function IndexList({ projects }: { projects: Project[] }) {
   const [hover, setHover] = useState<string | null>(null);
+  const hovered = projects.find((p) => p.slug === hover);
 
   const onMove = (e: MouseEvent<HTMLUListElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -78,10 +78,16 @@ function IndexList({ projects }: { projects: Project[] }) {
         }`}
         style={{ left: "calc(var(--px, 50%) + 28px)", top: "var(--py, 50%)", transform: "translateY(-50%)" }}
       >
-        {hover && (
-          <div key={hover} className="absolute left-1/2 top-1/2 h-[320px] w-[400px] -translate-x-1/2 -translate-y-1/2 scale-[0.7] animate-[fade-up_0.4s_both]">
-            <ProjectArt slug={hover} />
-          </div>
+        {hovered && (
+          <img
+            key={hovered.slug}
+            src={hovered.cover}
+            alt=""
+            width={1600}
+            height={1000}
+            decoding="async"
+            className="absolute inset-0 size-full animate-[fade-up_0.4s_both] object-cover object-top"
+          />
         )}
       </div>
     </ul>

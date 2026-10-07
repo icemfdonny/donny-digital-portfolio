@@ -22,7 +22,7 @@ export default function BrandCard({ className = "" }: { className?: string }) {
             <span className="text-right font-mono text-[10px] uppercase leading-relaxed tracking-[0.18em] text-neutral-400">
               Based in
               <br />
-              <span className="text-white">Bratislava, Slovakia</span>
+              <span className="text-white">Senec, Slovakia</span>
             </span>
           </figcaption>
         </figure>

@@ -1,4 +1,4 @@
-import { CLIENTS, PRINCIPLES, SKILLS, TOOLS } from "../data";
+import { PRINCIPLES, SKILLS, TOOLS } from "../data";
 import { usePageMeta } from "../hooks";
 import BrandCard from "../components/BrandCard";
 import CtaCard from "../components/CtaCard";
@@ -21,7 +21,7 @@ function Chips({ items }: { items: string[] }) {
 }
 
 export default function AboutPage() {
-  usePageMeta("About — Donny Digital", "Darien — freelance web designer and frontend developer based in Bratislava, Slovakia.");
+  usePageMeta("About — Donny Digital", "Darien — freelance web designer and frontend developer based in Senec, Slovakia.");
 
   return (
     <>
@@ -33,25 +33,15 @@ export default function AboutPage() {
             <BrandCard className="lg:sticky lg:top-28" />
 
             <div>
-              <Reveal className="max-w-2xl space-y-5 text-lg leading-relaxed text-muted">
+              <Reveal className="max-w-2xl text-lg leading-relaxed text-muted">
                 <p>
                   I&rsquo;m Darien, a freelance web designer and frontend developer working with startups and studios who want
                   their site to feel as sharp as their product. My process moves between Figma and code constantly, so nothing
                   gets lost in translation between design and build.
                 </p>
-                <p>
-                  Over the last four years I&rsquo;ve helped teams launch marketing sites, design systems, and product interfaces
-                  that hold up under real use &mdash; fast, accessible, and built to be maintained long after launch.
-                </p>
               </Reveal>
 
-              <Reveal delay={120} className="mt-12 grid grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-panel">
-                <div className="p-5">
-                  <p className="font-display text-2xl leading-none text-white md:text-[1.7rem]">
-                    <Counter to={4} suffix="+" />
-                  </p>
-                  <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-dim">Years of experience</p>
-                </div>
+              <Reveal delay={120} className="mt-12 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-panel">
                 <div className="p-5">
                   <p className="font-display text-2xl leading-none text-white md:text-[1.7rem]">
                     <Counter to={6} />
@@ -74,16 +64,6 @@ export default function AboutPage() {
                 <Reveal delay={60}>
                   <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-dim">Tools</p>
                   <Chips items={TOOLS} />
-                </Reveal>
-                <Reveal delay={100} className="border-t border-white/10 pt-8">
-                  <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-dim">Selected clients</p>
-                  <ul className="flex flex-wrap gap-x-8 gap-y-3">
-                    {CLIENTS.map((c) => (
-                      <li key={c} className="font-display text-base text-neutral-500 transition-colors hover:text-white">
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
                 </Reveal>
               </div>
             </div>

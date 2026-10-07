@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import type { Project } from "../data";
-import { ProjectArt } from "./art";
 import { ArrowUpRightIcon } from "./icons";
 import { Reveal, SpotlightCard } from "./ui";
 
@@ -8,12 +7,19 @@ export default function ProjectCard({ project: p, span = "", delay = 0 }: { proj
   return (
     <Reveal delay={delay} className={span}>
       <SpotlightCard as="article" className="group/card h-full overflow-hidden rounded-3xl border border-white/10 bg-panel">
-        <div className="relative h-64 overflow-hidden border-b border-white/10 md:h-80">
-          <div className="dots-bg absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_at_center,#000_30%,transparent_85%)]" />
-          <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover/card:scale-[1.07]">
-            <ProjectArt slug={p.slug} />
-          </div>
-          <span className="absolute left-5 top-5 font-mono text-[11px] tracking-widest text-white/40">{p.index}</span>
+        <div className="relative aspect-[16/10] overflow-hidden border-b border-white/10 bg-black">
+          <img
+            src={p.cover}
+            alt={p.coverAlt}
+            width={1600}
+            height={1000}
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover object-top transition-transform duration-700 ease-out group-hover/card:scale-[1.04]"
+          />
+          <span className="absolute left-5 top-5 rounded-full border border-white/15 bg-black/65 px-3 py-1 font-mono text-[10px] tracking-widest text-neutral-300">
+            {p.index}
+          </span>
           <span className="absolute right-5 top-5 rounded-full border border-white/15 bg-black/65 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-300">
             {p.year}
           </span>
@@ -30,7 +36,7 @@ export default function ProjectCard({ project: p, span = "", delay = 0 }: { proj
             </h3>
             <span className="font-mono text-[11px] uppercase tracking-widest text-dim">{p.category}</span>
           </div>
-          <p className="mt-4 max-w-md leading-relaxed text-muted">{p.description}</p>
+          <p className="mt-4 max-w-md leading-relaxed text-muted">{p.summary}</p>
         </div>
       </SpotlightCard>
     </Reveal>

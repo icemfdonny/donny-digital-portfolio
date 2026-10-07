@@ -74,7 +74,7 @@ export default function Footer() {
 
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-white/10 px-6 py-6 font-mono text-[11px] text-dim sm:flex-row">
         <p>&copy; {new Date().getFullYear()} Donny Digital. All rights reserved.</p>
-        <p>Designed &amp; built in Bratislava, Slovakia.</p>
+        <p>Designed &amp; built in Senec, Slovakia.</p>
       </div>
 
       <div aria-hidden="true" className="pointer-events-none select-none px-6 pb-0 pt-4">
