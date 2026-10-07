@@ -3,7 +3,12 @@ import { usePageMeta } from "../hooks";
 import BrandCard from "../components/BrandCard";
 import CtaCard from "../components/CtaCard";
 import PageHeader from "../components/PageHeader";
-import { ArrowLink, Counter, Reveal, SectionHeading, SpotlightCard } from "../components/ui";
+import { ArrowLink, Reveal, SectionHeading, SpotlightCard } from "../components/ui";
+
+const OFFER = [
+  { title: "Design that feels like you", body: "Distinctive websites shaped around your brand, product, and audience." },
+  { title: "Development that does it justice", body: "Responsive, polished builds with thoughtful interactions and attention to detail." },
+];
 
 function Chips({ items }: { items: string[] }) {
   return (
@@ -41,21 +46,17 @@ export default function AboutPage() {
                 </p>
               </Reveal>
 
-              <Reveal delay={120} className="mt-12 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-panel">
-                <div className="p-5">
-                  <p className="font-display text-2xl leading-none text-white md:text-[1.7rem]">
-                    <Counter to={6} />
-                  </p>
-                  <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-dim">Core disciplines</p>
-                </div>
-                <div className="p-5">
-                  <p className="font-display text-2xl leading-none text-white md:text-[1.7rem]">
-                    <Counter to={100} suffix="%" />
-                  </p>
-                  <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-dim">Hand-crafted</p>
-                </div>
+              <Reveal
+                delay={120}
+                className="mt-12 grid divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-panel sm:grid-cols-2 sm:divide-x sm:divide-y-0"
+              >
+                {OFFER.map((o) => (
+                  <div key={o.title} className="p-6">
+                    <h3 className="text-balance font-display text-base leading-snug text-white md:text-lg">{o.title}</h3>
+                    <p className="mt-4 text-sm leading-relaxed text-muted">{o.body}</p>
+                  </div>
+                ))}
               </Reveal>
-
               <div className="mt-12 space-y-8">
                 <Reveal>
                   <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-dim">Skills</p>
