@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_bot.backtest import max_drawdown, run_backtest
+from trading_bot.backtest import format_report, format_trades, max_drawdown, run_backtest
 from trading_bot.data import Bar, load_csv, synthetic
 from trading_bot.risk import DrawdownGuard, RiskLimits, position_size
 from trading_bot.strategy import ENTER, EXIT, HOLD, TrendParams, TrendStrategy, atr, sma
@@ -28,7 +28,7 @@ def dated(closes, **kw):
     return [Bar((d + timedelta(days=n)).isoformat(), b.open, b.high, b.low, b.close, b.volume) for n, b in enumerate(bars)]
 
 
-class Indicators(unittest.TestCase):
+class IndicatorMath(unittest.TestCase):
     def test_sma(self):
         self.assertEqual(sma([1, 2, 3, 4, 5], 3), [None, None, 2.0, 3.0, 4.0])
 
@@ -147,6 +147,63 @@ class Backtest(unittest.TestCase):
     def test_too_little_data_is_an_error(self):
         with self.assertRaises(ValueError):
             run_backtest(dated([100.0] * 50))
+
+
+class Reports(unittest.TestCase):
+    def test_short_history_gets_a_warning_and_long_history_does_not(self):
+        short = format_report(run_backtest(synthetic(500, seed=2)))
+        long_ = format_report(run_backtest(synthetic(2500, seed=2)))
+        self.assertIn("too short", short)
+        self.assertNotIn("too short", long_)
+
+    def test_trade_list_has_one_row_per_trade(self):
+        r = run_backtest(synthetic(1500, seed=4))
+        lines = format_trades(r).splitlines()
+        self.assertEqual(len(lines) - 1, len(r.trades))  # minus the header
+        self.assertEqual(format_trades(run_backtest(dated([100.0] * 300))), "No trades.")
+
+
+class RiskInputChecks(unittest.TestCase):
+    def test_percent_typed_as_whole_number_is_rejected(self):
+        for kwargs in ({"risk_per_trade": 2}, {"max_position_pct": 90}, {"max_drawdown_halt": 25}, {"risk_per_trade": 0}):
+            with self.assertRaises(ValueError, msg=str(kwargs)):
+                RiskLimits(**kwargs)
+        RiskLimits(risk_per_trade=0.02, max_position_pct=0.9, max_drawdown_halt=0.25)  # sane values still fine
+
+
+class CommandLine(unittest.TestCase):
+    def run_cli(self, *argv):
+        import contextlib
+        import io
+        from trading_bot.__main__ import main
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = main(list(argv))
+        return code, out.getvalue(), err.getvalue()
+
+    def test_bad_risk_value_gives_friendly_error(self):
+        code, _, err = self.run_cli("backtest", "whatever.csv", "--risk", "2")
+        self.assertEqual(code, 1)
+        self.assertIn("write 0.02 for 2%", err)
+
+    def test_missing_file_gives_friendly_error(self):
+        code, _, err = self.run_cli("backtest", "/nope/missing.csv")
+        self.assertEqual(code, 1)
+        self.assertTrue(err.startswith("Error:"))
+
+    def test_backtest_on_a_csv_with_trade_list(self):
+        from trading_bot.data import save_csv
+        path = Path(tempfile.mkdtemp()) / "FAKE.csv"
+        save_csv(synthetic(1500, seed=5), path)
+        code, out, _ = self.run_cli("backtest", str(path), "--trades", "--capital", "5000")
+        self.assertEqual(code, 0)
+        self.assertIn("BUY&HOLD", out)
+        self.assertIn("Bought", out)
+
+    def test_demo_runs_and_is_labelled_fake(self):
+        code, out, _ = self.run_cli("demo")
+        self.assertEqual(code, 0)
+        self.assertIn("FAKE DATA", out)
 
 
 class CsvLoading(unittest.TestCase):

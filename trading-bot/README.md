@@ -3,6 +3,8 @@
 A small, transparent trend-following bot, plus the tools to test it honestly before any
 money is involved. Python 3.10+, **no third-party packages**.
 
+New to code? Read **[HOW_IT_WORKS.md](HOW_IT_WORKS.md)** first - it explains everything in plain English.
+
 ## Read this first: what to expect
 
 - **It cannot promise profit, and neither can anyone else.** Most people who run trading
@@ -31,7 +33,7 @@ deliberately **no parameter optimizer**: tuning numbers to fit the past is how b
 
 ```bash
 cd trading-bot
-python3 -m unittest discover -s tests -t .   # 31 tests
+python3 -m unittest discover -s tests -t .   # 49 tests
 python3 -m trading_bot demo                  # runs on FAKE data - proves the code runs, nothing more
 ```
 
@@ -39,7 +41,7 @@ python3 -m trading_bot demo                  # runs on FAKE data - proves the co
 
 ```bash
 python3 -m trading_bot fetch SPY --years 15     # saves data/SPY.csv (Yahoo, unofficial API)
-python3 -m trading_bot backtest data/SPY.csv
+python3 -m trading_bot backtest data/SPY.csv            # add --trades to list every trade
 ```
 
 If `fetch` fails, download a CSV by hand from Yahoo Finance -> Historical Data and pass its path to `backtest`.
@@ -56,20 +58,37 @@ Try several symbols and several periods; if it only works on one, that's a warni
    ALPACA_SECRET_KEY=your-paper-secret
    ```
 3. Look before you leap: `python3 -m trading_bot paper SPY --dry-run`
-4. Run for real (paper): `python3 -m trading_bot paper SPY` - **once per trading day, after the close.**
-   A cron job / scheduled task is fine. Every decision and its reason is appended to `logs/decisions.csv`.
+4. Run for real (paper): `python3 -m trading_bot paper SPY` - **once per trading day, in the evening
+   after the market closes** (e.g. 6pm US Eastern). It refuses to place orders while the market is open,
+   because the strategy assumes decisions are made on completed daily bars. Use the same `--risk` etc.
+   you used in the backtest. Every decision and its reason is appended to `logs/decisions.csv`.
+   To automate it on a Mac/Linux machine that is on at that time, `crontab -e` and add (adjust paths and time zone):
+   ```
+   0 18 * * 1-5  cd /path/to/trading-bot && python3 -m trading_bot paper SPY >> logs/cron.log 2>&1
+   ```
 
 What a run can do: `BUY` (fills at next open) / `SET_STOP` (places or raises a broker-side
 stop-loss) / `SELL` / `HOLD` / `STAY_FLAT` / `WAIT` / `HALT_SELL` / `HALTED`. A new position
 gets its protective stop on the *next* day's run, because a stop can only be placed on shares you own.
 
 Limits: one symbol per Alpaca account; whole shares only; daily bars only; free IEX data feed.
+A freshly bought position has no stop-loss until the next evening's run (a stop can only be placed on shares you own).
+
+Good to know:
+- `state.json` remembers your peak balance and whether the kill switch tripped. Keep it with the bot and run the bot from
+  one computer. If it ever becomes unreadable the bot refuses to trade rather than guess; `reset-halt` repairs it.
+- If you reset or withdraw from your Alpaca paper account, the balance drops and the kill switch will trip. That is
+  expected: run `reset-halt` afterwards.
+- Reads from Alpaca are retried on temporary errors. Orders are never retried (a retry after a lost reply could buy twice);
+  if a run crashes mid-order, the next run sees the open order or position and carries on safely.
 
 ## What has and hasn't been verified
 
 - Verified by automated tests: indicator math, no look-ahead, next-open fills, gap-through-stop
   fills, position sizing, kill switch (backtest *and* live runner), no duplicate orders,
-  dry-run places nothing, and the exact order payloads sent to Alpaca.
+  dry-run places nothing, refusal to trade while the market is open, corrupt-state handling,
+  rejection of mistyped percentages (`--risk 2`), and the exact order payloads sent to Alpaca.
+  Each safety test was also checked by deliberately breaking the code and confirming the test fails.
 - **Not verified against the real services:** the Yahoo download and the live Alpaca paper API
   were not reachable from the environment this was built in, so those calls are tested
   only against fakes. Your first `--dry-run` is the real integration test; read its output

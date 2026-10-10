@@ -1,10 +1,11 @@
 import json
+import os
 import tempfile
 import unittest
 from datetime import date, timedelta
 from pathlib import Path
 
-from trading_bot.alpaca import AlpacaError, AlpacaPaper, PAPER_BASE
+from trading_bot.alpaca import AlpacaError, AlpacaPaper, PAPER_BASE, load_env_file
 from trading_bot.data import Bar
 from trading_bot.paper import reset_halt, run_once
 from trading_bot.risk import RiskLimits
@@ -119,6 +120,43 @@ class Runner(unittest.TestCase):
         self.run_it(c, dry_run=True)  # must not raise; last (forming) bar is dropped
         self.assertEqual(len(bars), 300)  # source list untouched
 
+    def test_real_run_refused_while_market_open(self):
+        c = FakeClient(uptrend(), is_open=True)
+        with self.assertRaises(RuntimeError) as ctx:
+            self.run_it(c)
+        self.assertIn("market is open", str(ctx.exception))
+        self.assertEqual(c.calls, [])
+
+    def test_waits_while_a_sell_is_unfilled_instead_of_selling_twice(self):
+        c = FakeClient(downtrend_after_uptrend(), qty=10, orders=[{"id": "o9", "side": "sell", "type": "market"}])
+        self.assertEqual(self.run_it(c), "WAIT")
+        self.assertEqual(c.calls, [])
+
+    def test_refuses_to_run_with_a_short_position(self):
+        c = FakeClient(uptrend(), qty=-5)
+        with self.assertRaises(RuntimeError):
+            self.run_it(c)
+        self.assertEqual(c.calls, [])
+
+    def test_corrupt_state_file_blocks_trading_instead_of_unhalting(self):
+        self.state.write_text('{"peak_equity": 20000, "hal')  # truncated mid-write
+        c = FakeClient(uptrend())
+        with self.assertRaises(RuntimeError) as ctx:
+            self.run_it(c)
+        self.assertIn("unreadable", str(ctx.exception))
+        self.assertEqual(c.calls, [])
+        reset_halt(self.state)  # the documented way out also repairs the file
+        self.assertEqual(self.run_it(FakeClient(uptrend())), "BUY")
+
+    def test_state_file_from_older_version_gets_defaults(self):
+        self.state.write_text(json.dumps({"stop": 123.0}))
+        self.assertEqual(self.run_it(FakeClient(uptrend())), "BUY")
+
+    def test_state_is_saved_without_leftover_temp_file(self):
+        self.run_it(FakeClient(uptrend()))
+        self.assertTrue(self.state.exists())
+        self.assertEqual([p.name for p in self.state.parent.glob("*.tmp")], [])
+
     def test_tiny_account_skips_instead_of_crashing(self):
         c = FakeClient(uptrend(), equity=50.0)
         self.assertEqual(self.run_it(c), "SKIP")
@@ -149,10 +187,44 @@ class AlpacaHttp(unittest.TestCase):
         self.assertEqual(sent[0][2]["APCA-API-KEY-ID"], "KEY")
 
     def test_no_position_is_zero_and_errors_raise(self):
-        a, _ = self.make([(404, {"message": "position does not exist"}), (500, {"message": "boom"})])
+        a, sent = self.make([(404, {"message": "position does not exist"}), (400, {"message": "bad"})])
         self.assertEqual(a.position_qty("SPY"), 0)
         with self.assertRaises(AlpacaError):
             a.position_qty("SPY")
+
+    def test_reads_retry_temporary_errors(self):
+        a, sent = self.make([(503, None), (429, None), (200, {"equity": "5"})])
+        slept = []
+        a._sleep = slept.append
+        self.assertEqual(a.account(), {"equity": "5"})
+        self.assertEqual(len(sent), 3)
+        self.assertEqual(slept, [1, 2])
+
+    def test_reads_give_up_after_three_tries(self):
+        a, sent = self.make([(500, {"message": "boom"})] * 3)
+        a._sleep = lambda s: None
+        with self.assertRaises(AlpacaError):
+            a.account()
+        self.assertEqual(len(sent), 3)
+
+    def test_orders_are_never_retried(self):
+        a, sent = self.make([(503, {"message": "try later"}), (200, {"id": "would-be-duplicate"})])
+        with self.assertRaises(AlpacaError):
+            a.market_order("SPY", "buy", 3)
+        self.assertEqual(len(sent), 1)
+
+    def test_network_error_on_read_is_retried(self):
+        calls = []
+
+        def http(method, url, headers, body):
+            calls.append(url)
+            if len(calls) < 2:
+                raise ConnectionError("wifi dropped")
+            return 200, {"is_open": False}
+        a = AlpacaPaper("K", "S", http, sleep=lambda s: None)
+        self.assertEqual(a.clock(), {"is_open": False})
+        self.assertEqual(len(calls), 2)
+
 
     def test_bars_pagination(self):
         a, sent = self.make([
@@ -162,6 +234,20 @@ class AlpacaHttp(unittest.TestCase):
         bars = a.daily_bars("SPY")
         self.assertEqual([b.day for b in bars], ["2024-01-02", "2024-01-03"])
         self.assertIn("page_token=abc", sent[1][1])
+
+
+class EnvFile(unittest.TestCase):
+    def test_reads_values_but_real_environment_wins(self):
+        d = Path(tempfile.mkdtemp()) / ".env"
+        d.write_text("# comment\nTB_TEST_A='one'\nTB_TEST_B=two\n\n")
+        os.environ["TB_TEST_B"] = "from-real-env"
+        os.environ.pop("TB_TEST_A", None)
+        try:
+            load_env_file(d)
+            self.assertEqual(os.environ["TB_TEST_A"], "one")
+            self.assertEqual(os.environ["TB_TEST_B"], "from-real-env")
+        finally:
+            os.environ.pop("TB_TEST_A", None); os.environ.pop("TB_TEST_B", None)
 
 
 if __name__ == "__main__":

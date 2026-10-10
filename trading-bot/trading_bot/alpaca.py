@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -18,6 +19,7 @@ from .data import Bar
 
 PAPER_BASE = "https://paper-api.alpaca.markets"
 DATA_BASE = "https://data.alpaca.markets"
+RETRY_STATUS = (429, 500, 502, 503, 504)  # temporary problems worth retrying (reads only)
 
 # (method, url, headers, json_body) -> (status_code, parsed_json_or_None)
 Http = Callable[[str, str, dict[str, str], dict | None], tuple[int, Any]]
@@ -38,16 +40,22 @@ def urllib_http(method: str, url: str, headers: dict[str, str], body: dict | Non
             return e.code, {"message": raw.decode(errors="replace")}
 
 
-def load_env_file(path: str | Path = ".env") -> None:
-    """Tiny .env reader (KEY=VALUE lines). Real environment variables win over the file."""
-    p = Path(path)
-    if not p.exists():
+def load_env_file(path: str | Path | None = None) -> None:
+    """Tiny .env reader (KEY=VALUE lines). Real environment variables win over the file.
+
+    Without a path it looks in the current folder, then in the trading-bot folder itself,
+    so it works no matter where you launch the command from.
+    """
+    candidates = [Path(path)] if path else [Path(".env"), Path(__file__).resolve().parent.parent / ".env"]
+    for p in candidates:
+        if not p.exists():
+            continue
+        for line in p.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip("'\""))
         return
-    for line in p.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip().strip("'\""))
 
 
 class AlpacaError(RuntimeError):
@@ -55,9 +63,10 @@ class AlpacaError(RuntimeError):
 
 
 class AlpacaPaper:
-    def __init__(self, key_id: str, secret: str, http: Http = urllib_http):
+    def __init__(self, key_id: str, secret: str, http: Http = urllib_http, sleep: Callable[[float], None] = time.sleep):
         self._headers = {"APCA-API-KEY-ID": key_id, "APCA-API-SECRET-KEY": secret}
         self._http = http
+        self._sleep = sleep
 
     @classmethod
     def from_env(cls) -> "AlpacaPaper":
@@ -68,8 +77,27 @@ class AlpacaPaper:
             )
         return cls(key, secret)
 
+    def _request(self, method: str, url: str, body: dict | None = None) -> tuple[int, Any]:
+        """One HTTP call. Reads (GET) are retried on temporary failures; orders are NEVER retried,
+        because a retry after a lost reply could place the same order twice."""
+        attempts = 3 if method == "GET" else 1
+        for n in range(attempts):
+            last = n == attempts - 1
+            try:
+                status, payload = self._http(method, url, self._headers, body)
+            except OSError:  # network down, timeout, DNS...
+                if last:
+                    raise
+                self._sleep(2**n)
+                continue
+            if status in RETRY_STATUS and not last:
+                self._sleep(2**n)
+                continue
+            return status, payload
+        raise AssertionError("unreachable")
+
     def _call(self, method: str, url: str, body: dict | None = None, ok: tuple[int, ...] = (200,)) -> Any:
-        status, payload = self._http(method, url, self._headers, body)
+        status, payload = self._request(method, url, body)
         if status not in ok:
             msg = payload.get("message") if isinstance(payload, dict) else payload
             raise AlpacaError(f"{method} {url} -> HTTP {status}: {msg}")
@@ -82,7 +110,7 @@ class AlpacaPaper:
         return self._call("GET", f"{PAPER_BASE}/v2/clock")
 
     def position_qty(self, symbol: str) -> int:
-        status, payload = self._http("GET", f"{PAPER_BASE}/v2/positions/{symbol}", self._headers, None)
+        status, payload = self._request("GET", f"{PAPER_BASE}/v2/positions/{symbol}")
         if status == 404:
             return 0
         if status != 200:

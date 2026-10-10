@@ -191,4 +191,23 @@ def format_report(r: Result) -> str:
     for y in bot_y:
         flag = "  <- bot lagged" if bot_y[y] < bh_y[y] - 0.02 else ""
         lines.append(f"  {y}: {pct(bot_y[y])} vs {pct(bh_y[y])}{flag}")
+    years = len(r.curve) / TRADING_DAYS
+    if years < 5:
+        lines.append(f"\nWARNING: only {years:.1f} years of data. That is too short to judge anything; "
+                     "use 10+ years that include at least one crash (2008, 2020, 2022).")
+    lines.append("\nDrawdown = worst drop from a high point to a later low. "
+                 "Sharpe = return per unit of bumpiness (higher = smoother ride).")
+    return "\n".join(lines)
+
+
+def format_trades(r: Result) -> str:
+    if not r.trades:
+        return "No trades."
+    lines = [f"{'Bought':<11}{'at':>9}  {'Sold':<11}{'at':>9}{'shares':>7}{'profit':>10}  why it ended"]
+    for t in r.trades:
+        if t.exit_price is None:
+            lines.append(f"{t.entry_day:<11}{t.entry_price:>9.2f}  {'(still open)':<11}")
+        else:
+            lines.append(f"{t.entry_day:<11}{t.entry_price:>9.2f}  {t.exit_day:<11}{t.exit_price:>9.2f}"
+                         f"{t.shares:>7}{t.pnl:>+10.2f}  {t.reason}")
     return "\n".join(lines)

@@ -11,6 +11,15 @@ class RiskLimits:
     max_position_pct: float = 0.90  # never put more than 90% of equity in one position
     max_drawdown_halt: float = 0.25  # kill switch: flatten and stop if equity falls 25% from its peak
 
+    def __post_init__(self) -> None:
+        # Fractions, not percents: a beginner typing "--risk 2" for "2%" must not get 200% risk.
+        if not 0 < self.risk_per_trade <= 0.10:
+            raise ValueError(f"risk per trade must be between 0 and 0.10 (write 0.02 for 2%), got {self.risk_per_trade}")
+        if not 0 < self.max_position_pct <= 1.0:
+            raise ValueError(f"max position must be between 0 and 1 (write 0.9 for 90%), got {self.max_position_pct}")
+        if not 0 < self.max_drawdown_halt < 1.0:
+            raise ValueError(f"kill-switch drawdown must be between 0 and 1 (write 0.25 for 25%), got {self.max_drawdown_halt}")
+
 
 def position_size(equity: float, price: float, stop_distance: float, limits: RiskLimits) -> int:
     """Whole shares such that hitting the stop loses ~risk_per_trade of equity, capped by max_position_pct."""

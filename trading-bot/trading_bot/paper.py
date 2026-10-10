@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,14 +24,29 @@ from .strategy import ENTER, EXIT, TrendStrategy
 LOG_FIELDS = ["time_utc", "symbol", "last_bar", "close", "sma", "signal", "action", "qty", "stop", "equity", "note"]
 
 
+DEFAULT_STATE = {"peak_equity": None, "halted": False, "stop": None}
+
+
 def _load_state(path: Path) -> dict:
-    if path.exists():
-        return json.loads(path.read_text())
-    return {"peak_equity": None, "halted": False, "stop": None}
+    if not path.exists():
+        return dict(DEFAULT_STATE)
+    try:
+        saved = json.loads(path.read_text())
+        if not isinstance(saved, dict):
+            raise ValueError("not a JSON object")
+    except ValueError as e:
+        # Fail closed: this file remembers whether the kill switch tripped, so guessing could un-halt the bot.
+        raise RuntimeError(
+            f"{path} is unreadable ({e}). Not trading, because that file remembers the kill switch. "
+            "Fix it, or delete it to start fresh."
+        ) from e
+    return {**DEFAULT_STATE, **saved}
 
 
 def _save_state(path: Path, state: dict) -> None:
-    path.write_text(json.dumps(state, indent=2))
+    tmp = path.with_name(path.name + ".tmp")  # write-then-rename so a crash can't leave half a file
+    tmp.write_text(json.dumps(state, indent=2))
+    os.replace(tmp, path)
 
 
 def _log(path: Path, row: dict) -> None:
@@ -45,9 +61,7 @@ def _log(path: Path, row: dict) -> None:
 
 def reset_halt(state_path: Path) -> None:
     """Manually re-arm the bot after the kill switch tripped. Resets the peak to the current account value."""
-    state = _load_state(state_path)
-    state.update(halted=False, peak_equity=None, stop=None)
-    _save_state(state_path, state)
+    _save_state(state_path, dict(DEFAULT_STATE))
 
 
 def run_once(
@@ -72,8 +86,14 @@ def run_once(
     equity = float(acct["equity"])
 
     clock = client.clock()
+    market_open = bool(clock.get("is_open"))
+    if market_open and not dry_run:
+        raise RuntimeError(
+            "The market is open right now. Run this in the evening, after the close, so decisions "
+            "use completed daily bars (that is what the backtest assumes)."
+        )
     bars = client.daily_bars(symbol)
-    if clock.get("is_open"):  # today's bar is still forming - only trust completed days
+    if market_open:  # dry run during the day: today's bar is still forming, only trust completed days
         today = clock["timestamp"][:10]
         bars = [b for b in bars if b.day < today]
     if len(bars) <= strategy.first_ready_index:
@@ -112,6 +132,8 @@ def run_once(
     guard.update(equity)
     state["peak_equity"], state["halted"] = guard.peak, guard.tripped
     qty = client.position_qty(symbol)
+    if qty < 0:
+        raise RuntimeError(f"You hold a SHORT position in {symbol} ({qty}). This bot only goes long; close it yourself first.")
     if guard.tripped:
         if qty > 0:
             cancel_all_and_wait()
@@ -122,8 +144,9 @@ def run_once(
 
     # --- an order from a previous run is still working: don't stack another on top ----------
     orders = client.open_orders(symbol)
-    if any(o.get("side") == "buy" for o in orders):
-        return finish("WAIT", "a buy order is still open (fills at the next market open)")
+    working = [o for o in orders if o.get("type") != "stop"]
+    if working:
+        return finish("WAIT", f"a {working[0].get('side', '')} order is still open (it fills at the next market open)")
 
     sig = strategy.signal(ind, bars, i, qty > 0)
 
