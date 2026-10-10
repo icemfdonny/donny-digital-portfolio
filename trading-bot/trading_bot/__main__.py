@@ -9,6 +9,7 @@ from .alpaca import AlpacaError, AlpacaPaper, load_env_file
 from .backtest import format_report, format_trades, run_backtest
 from .data import fetch_yahoo, load_csv, save_csv, synthetic
 from .paper import reset_halt, run_once
+from .research import evaluate, format_result, scoreboard
 from .risk import RiskLimits
 from .strategy import TrendParams, TrendStrategy
 
@@ -39,6 +40,13 @@ def _build_parser() -> argparse.ArgumentParser:
     b.add_argument("--trades", action="store_true", help="also list every individual trade")
     _add_risk_args(b)
 
+    r = sub.add_parser("research", help="compare fixed, pre-declared candidate rules with buy-and-hold on several markets")
+    r.add_argument("csv", nargs="+", help="one CSV per market (e.g. SPY, QQQ, EFA, TLT, GLD)")
+    r.add_argument("--cost-bps", type=float, default=5.0, help="cost per unit traded in basis points (default %(default)s)")
+    r.add_argument("--cash-rate", type=float, default=0.0, help="yearly interest on idle cash; 0.02 means 2%% (default %(default)s)")
+    r.add_argument("--from", dest="eval_from", help="only evaluate from this date (YYYY-MM-DD); earlier data still feeds the averages")
+    r.add_argument("--to", dest="eval_to", help="only evaluate up to this date (YYYY-MM-DD)")
+
     sub.add_parser("demo", help="backtest on FAKE data just to prove the machinery runs")
 
     p = sub.add_parser("paper", help="run one daily decision against your Alpaca PAPER account")
@@ -64,6 +72,15 @@ def _run(a: argparse.Namespace) -> None:
             if a.trades:
                 print("\n" + format_trades(r))
             print()
+    elif a.cmd == "research":
+        if not 0 <= a.cash_rate < 0.25:
+            raise ValueError(f"cash rate must be a fraction like 0.02 for 2%, got {a.cash_rate}")
+        results = []
+        for path in a.csv:
+            res = evaluate(Path(path).stem, load_csv(path), a.cost_bps, a.cash_rate, a.eval_from, a.eval_to)
+            results.append(res)
+            print(format_result(res, a.cost_bps, a.cash_rate), end="\n\n")
+        print(scoreboard(results))
     elif a.cmd == "demo":
         print("*** FAKE DATA: these numbers say nothing about real markets. This only proves the code runs. ***\n")
         print(format_report(run_backtest(synthetic(), symbol="FAKE")))
