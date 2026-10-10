@@ -149,6 +149,30 @@ class Backtest(unittest.TestCase):
             run_backtest(dated([100.0] * 50))
 
 
+class CashAndExposure(unittest.TestCase):
+    def test_idle_cash_earns_interest_in_the_backtest(self):
+        r = run_backtest(dated([100.0] * 300), TrendStrategy(), cash_rate=0.05)
+        self.assertEqual(r.trades, [])  # flat market: never buys, so equity is pure cash interest
+        expected = 10_000 * (1.05 ** (1 / 252)) ** len(r.curve)
+        self.assertAlmostEqual(r.curve[-1][1], expected, places=6)
+        self.assertAlmostEqual(run_backtest(dated([100.0] * 300)).curve[-1][1], 10_000)  # default: no interest
+
+    def test_avg_invested_matches_an_independent_calculation(self):
+        bars = synthetic(1500, seed=9)
+        r = run_backtest(bars, symbol="X")
+        close = {b.day: b.close for b in bars}
+        invested = []
+        for day, equity in r.curve:
+            shares = sum(t.shares for t in r.trades if t.entry_day <= day and (t.exit_day is None or day < t.exit_day))
+            invested.append(shares * close[day] / equity)
+        self.assertAlmostEqual(r.metrics["avg_invested"], sum(invested) / len(invested), places=9)
+        self.assertLess(r.metrics["avg_invested"], r.metrics["exposure"])  # sized below 100% of the account
+
+    def test_report_explains_how_little_of_the_account_was_invested(self):
+        text = format_report(run_backtest(synthetic(1500, seed=9)))
+        self.assertIn("of the account was invested on average", text)
+
+
 class Reports(unittest.TestCase):
     def test_short_history_gets_a_warning_and_long_history_does_not(self):
         short = format_report(run_backtest(synthetic(500, seed=2)))

@@ -47,7 +47,7 @@ All code lives in the `trading_bot` folder.
 | `paper.py` | **The daily manager** | Once per evening: checks the account, checks the emergency brake, asks the analyst, then places **at most one order** and keeps the stop-loss up to date. Writes every decision and its reason to a log. |
 | `__main__.py` | **The control panel** | The buttons you press: `demo`, `fetch`, `backtest`, `paper`, `reset-halt`. Turns mistakes into a clear message instead of scary error text. |
 
-The `tests` folder holds 49 automatic checks - like a safety inspector who tries to break the bot every time the
+The `tests` folder holds 80 automatic checks - like a safety inspector who tries to break the bot every time the
 code changes. For example: *"does a crash overnight sell at the gapped-down price, not the nicer stop price?"*, *"can
 it ever buy twice?"*, *"does it refuse to trade while the market is open?"*
 
@@ -90,6 +90,11 @@ really all there is to it. A few other words you'll see:
 - **Kill switch** - the emergency brake described above.
 
 ## What it can *not* do
+
+- **It does not beat simply holding the fund.** Tested on 33 years of SPY and six other markets, the bot earned less than
+  buy-and-hold (SPY: 3.8% a year vs 10.9%), mostly because it only kept about a third of the account invested. Better
+  rules (see `research.py`) cut crashes roughly in half but still earned a bit less than holding. The `research`
+  command is how any idea should be judged: fixed rules, many markets, a bar set in advance.
 
 - It can't see the future, and it will **lose money in some stretches**. It will often earn less than buy-and-hold in
   strong bull markets - the trade-off is meant to be smaller crashes.

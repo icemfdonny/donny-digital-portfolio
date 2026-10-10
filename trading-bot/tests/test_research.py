@@ -7,7 +7,7 @@ from pathlib import Path
 
 from trading_bot.__main__ import main
 from trading_bot.data import Bar, save_csv, synthetic
-from trading_bot.research import (BOT, RULES, WARMUP, evaluate, scoreboard, simulate,
+from trading_bot.research import (BOT, RULES, WARMUP, evaluate, format_result, scoreboard, simulate,
                                   w_ensemble, w_hold, w_monthly_sma, w_sma_filter)
 
 
@@ -128,6 +128,54 @@ class Harness(unittest.TestCase):
         self.assertGreaterEqual(WARMUP, 210)
 
 
+class AuditFixes(unittest.TestCase):
+    def test_plain_200_day_rule_is_strict_on_an_exact_tie(self):
+        closes = list(range(100, 350)) + [350] * 250  # long rise, then flat until the average equals the close exactly
+        bars = bars_from_opens([float(c) for c in closes])
+        w = w_sma_filter(bars, 200, 0.0)
+        self.assertEqual(w[-1], 0.0)  # close == average -> out (the old state machine kept the position)
+        self.assertEqual(w[260], 1.0)  # still above the average while it catches up
+
+    def test_inputs_that_would_flatter_a_rule_are_rejected(self):
+        bars = bars_from_opens([100.0] * 80)
+        for kwargs in ({"cost_bps": -5}, {"cost_bps": float("nan")}, {"cost_bps": 5000}, {"cash_rate": -0.01}, {"cash_rate": 2}):
+            with self.assertRaises(ValueError, msg=str(kwargs)):
+                simulate(bars, w_hold(bars), 10, 79, **kwargs)
+        with self.assertRaises(ValueError):  # leverage / shorting by accident
+            simulate(bars, [2.0] * 80, 10, 79)
+        with self.assertRaises(ValueError):
+            simulate(bars, [-1.0] * 80, 10, 79)
+
+    def test_dates_are_parsed_not_compared_as_text(self):
+        bars = synthetic(2600, seed=1)
+        for bad in ("garbage", "2010-6-30", "2010/06/30", "2005"):
+            with self.assertRaises(ValueError, msg=bad):
+                evaluate("A", bars, eval_from=bad)
+            with self.assertRaises(ValueError, msg=bad):
+                evaluate("A", bars, eval_to=bad)
+        with self.assertRaises(ValueError):
+            evaluate("A", bars, eval_from="2015-01-01", eval_to="2014-01-01")
+
+    def test_cash_rate_also_reaches_the_current_bot_row(self):
+        bars = synthetic(2600, seed=1)
+        no_cash = evaluate("A", bars)["rows"][BOT]["full"]["cagr"]
+        cash = evaluate("A", bars, cash_rate=0.04)["rows"][BOT]["full"]["cagr"]
+        self.assertGreater(cash, no_cash + 0.005)  # the bot holds mostly idle cash, so interest must lift it
+
+    def test_bot_invested_column_is_share_of_account_not_days(self):
+        row = evaluate("A", synthetic(2600, seed=1))["rows"][BOT]
+        self.assertLess(row["exposure"], 0.8)
+        self.assertGreater(row["exposure"], 0.0)
+
+    def test_report_warns_on_short_windows_and_shows_a_tripped_kill_switch(self):
+        short = evaluate("A", synthetic(450, seed=1))
+        self.assertIn("too short", format_result(short, 5, 0))
+        res = evaluate("A", synthetic(2600, seed=1))
+        res["bot_halted"] = "2012-03-04"
+        self.assertIn("kill switch tripped on 2012-03-04", format_result(res, 5, 0))
+        self.assertNotIn("kill switch", format_result(evaluate("A", synthetic(2600, seed=1)), 5, 0))
+
+
 class Cli(unittest.TestCase):
     def run_cli(self, *argv):
         out, err = io.StringIO(), io.StringIO()
@@ -143,6 +191,14 @@ class Cli(unittest.TestCase):
         self.assertEqual((code, err), (0, ""))
         for needle in ("=== AAA", "=== BBB", "monthly_sma210", "SCOREBOARD", "cash earns 2%"):
             self.assertIn(needle, out)
+
+    def test_bad_cost_and_dates_give_friendly_errors(self):
+        d = Path(tempfile.mkdtemp())
+        save_csv(synthetic(2600, seed=3), d / "AAA.csv")
+        for flag, value, needle in (("--cost-bps", "-50", "basis points"), ("--from", "garbage", "--from"), ("--to", "2010-6-30", "--to")):
+            code, _, err = self.run_cli("research", str(d / "AAA.csv"), flag, value)
+            self.assertEqual(code, 1, flag)
+            self.assertIn(needle, err)
 
     def test_cash_rate_typed_as_percent_is_rejected(self):
         code, _, err = self.run_cli("research", "x.csv", "--cash-rate", "2")

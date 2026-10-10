@@ -12,6 +12,7 @@ Fully invested means 100% of the account; there is no leverage and no shorting.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import Callable
 
 from .backtest import TRADING_DAYS, _stats, run_backtest
@@ -31,6 +32,8 @@ def w_sma_filter(bars: list[Bar], n: int = 200, band: float = 0.0) -> list[float
     """Fully invested while the close is above its n-day average (optionally with a +/-band to flip)."""
     closes = [b.close for b in bars]
     avg = sma(closes, n)
+    if band == 0:  # the plain rule, exactly as stated: 1 if close > average else 0 (an exact tie means 0)
+        return [1.0 if a is not None and c > a else 0.0 for c, a in zip(closes, avg)]
     out, cur = [], 0.0
     for c, a in zip(closes, avg):
         if a is not None:
@@ -91,6 +94,12 @@ def simulate(bars: list[Bar], weights: list[float], start: int, end: int,
     """Weights decided at the close of bar k-1 are traded at the open of bar k and held to the open of bar k+1."""
     if not 0 <= start < end <= len(bars) - 1 or end - start - 1 < 30:
         raise ValueError("window too short or outside the data")
+    if not 0 <= cost_bps <= 500:
+        raise ValueError(f"cost must be between 0 and 500 basis points (5 means 0.05%), got {cost_bps}")
+    if not 0 <= cash_rate < 0.25:
+        raise ValueError(f"cash rate must be a fraction like 0.02 for 2%, got {cash_rate}")
+    if any(not 0.0 <= w <= 1.0 for w in weights[start:end]):
+        raise ValueError("weights must stay between 0 and 1 (no leverage, no shorting)")
     cost = cost_bps / 10_000
     cash_d = (1 + cash_rate) ** (1 / TRADING_DAYS) - 1
     eq, prev_w, turnover, w_sum = 1.0, 0.0, 0.0, 0.0
@@ -111,9 +120,22 @@ def _slice_stats(values: list[float]) -> dict[str, float]:
     return {k: s[k] for k in ("cagr", "max_drawdown", "sharpe", "total_return")}
 
 
+def _iso_day(text: str, flag: str) -> str:
+    try:
+        return date.fromisoformat(text).isoformat()
+    except ValueError:
+        raise ValueError(f"{flag} must be a date like 2010-06-30, got {text!r}") from None
+
+
 def evaluate(symbol: str, bars: list[Bar], cost_bps: float = 5.0, cash_rate: float = 0.0,
              eval_from: str | None = None, eval_to: str | None = None) -> dict:
     """Run every rule (plus the current bot) over one common window; stats for the whole window and both halves."""
+    if eval_from:
+        eval_from = _iso_day(eval_from, "--from")
+    if eval_to:
+        eval_to = _iso_day(eval_to, "--to")
+    if eval_from and eval_to and eval_from > eval_to:
+        raise ValueError(f"--from ({eval_from}) is after --to ({eval_to})")
     start = WARMUP - 1
     if eval_from:
         start = max(start, next((i for i, b in enumerate(bars) if b.day >= eval_from), len(bars)))
@@ -130,8 +152,9 @@ def evaluate(symbol: str, bars: list[Bar], cost_bps: float = 5.0, cash_rate: flo
     out["first"], out["last"] = bars[start + 1].day, bars[end].day
 
     # reference: the existing bot on the same window (its own engine: 2% risk sizing, 3-ATR trailing stop)
-    bot = run_backtest(bars[start - 199:end + 1], symbol=symbol, slippage_bps=cost_bps)
-    out["rows"][BOT] = _row([v for _, v in bot.curve], bot.metrics["exposure"], float(len(bot.trades)))
+    bot = run_backtest(bars[start - 199:end + 1], symbol=symbol, slippage_bps=cost_bps, cash_rate=cash_rate)
+    out["rows"][BOT] = _row([v for _, v in bot.curve], bot.metrics["avg_invested"], float(len(bot.trades)))
+    out["bot_halted"] = bot.halted_on
     out["years"] = (end - start - 1) / TRADING_DAYS
     return out
 
@@ -168,7 +191,8 @@ def scoreboard(results: list[dict]) -> str:
         diff = sum(s["cagr"] - h["cagr"] for _, s, h in cells) / len(cells)
         lines.append(f"{n:<16}{f'{more}/{len(cells)}':>12}{f'{pain}/{len(cells)}':>11}{diff * 100:>18.1f}%")
     lines.append("MORE MONEY needs to win in most cells, not a few, before it means anything. "
-                 "Beating hold on return AND drawdown in every period would be unusual; treat a clean sweep with suspicion too.")
+                 "Cells overlap (the whole window contains both halves) and markets move together, so X/N is weaker evidence "
+                 "than it looks. Beating hold on return AND drawdown in every period would be unusual; treat a clean sweep with suspicion too.")
     return "\n".join(lines)
 
 
@@ -177,7 +201,7 @@ def format_result(res: dict, cost_bps: float, cash_rate: float) -> str:
     lines = [
         f"=== {res['symbol']}: {res['first']} -> {res['last']} ({res['years']:.1f} yrs; cost {cost_bps:g} bps per trade; "
         f"cash earns {cash_rate * 100:g}%/yr) ===",
-        f"{'rule':<16}{'CAGR':>8}{'worstDD':>9}{'Sharpe':>8}{'invested':>10}{'in/out':>8}   {'1st half CAGR / DD':<20}{'2nd half CAGR / DD'}",
+        f"{'rule':<16}{'CAGR':>8}{'worstDD':>9}{'Sharpe*':>8}{'invested':>10}{'in/out':>8}   {'1st half CAGR / DD':<20}{'2nd half CAGR / DD'}",
     ]
     for name, row in res["rows"].items():
         f, a, b = row["full"], row["h1"], row["h2"]
@@ -185,6 +209,11 @@ def format_result(res: dict, cost_bps: float, cash_rate: float) -> str:
             f"{name:<16}{pct(f['cagr']):>8}{pct(f['max_drawdown']):>9}{f['sharpe']:>8.2f}{row['exposure'] * 100:>9.0f}%"
             f"{row['round_trips'] / res['years']:>8.1f}   {pct(a['cagr'])} /{pct(a['max_drawdown']):<9}{pct(b['cagr'])} /{pct(b['max_drawdown'])}"
         )
-    lines.append("invested = average share of the account in the market (for current_bot: share of DAYS in the market); "
-                 "in/out = round trips per year.")
+    lines.append("invested = average share of the account in the market; in/out = round trips per year; "
+                 "Sharpe* = return per unit of bumpiness with the risk-free rate taken as 0 "
+                 "(flatters rules that sit in cash if --cash-rate is above 0).")
+    if res["years"] < 5:
+        lines.append(f"WARNING: only {res['years']:.1f} years evaluated. That is too short to judge anything.")
+    if res.get("bot_halted"):
+        lines.append(f"NOTE: current_bot's kill switch tripped on {res['bot_halted']}; it stayed in cash for the rest of the window.")
     return "\n".join(lines)

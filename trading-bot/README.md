@@ -13,6 +13,9 @@ New to code? Read **[HOW_IT_WORKS.md](HOW_IT_WORKS.md)** first - it explains eve
   hard even for professionals. This bot's rule is built to **limit big drawdowns**, not to
   beat the market: expect it to **lag buy-and-hold in strong bull markets** and to lose
   less in crashes. The backtest report prints this year by year so you can see it.
+- **Tested on real history, this bot (as built) earned LESS than buy-and-hold, and none of the simple rules compared
+  against holding passed a pre-declared bar on seven markets.** See "What the research found" below. It is a
+  learning and research tool, not a proven way to make money.
 - **Live (real-money) trading is intentionally not wired up.** `alpaca.py` can only talk to
   Alpaca's *paper* (fake-money) server.
 
@@ -33,7 +36,7 @@ deliberately **no parameter optimizer**: tuning numbers to fit the past is how b
 
 ```bash
 cd trading-bot
-python3 -m unittest discover -s tests -t .   # 49 tests
+python3 -m unittest discover -s tests -t .   # 80 tests
 python3 -m trading_bot demo                  # runs on FAKE data - proves the code runs, nothing more
 ```
 
@@ -47,6 +50,32 @@ python3 -m trading_bot backtest data/SPY.csv            # add --trades to list e
 If `fetch` fails, download a CSV by hand from Yahoo Finance -> Historical Data and pass its path to `backtest`.
 Try several symbols and several periods; if it only works on one, that's a warning, not a win.
 (Include 2008-09 and 2022 if you can.)
+
+## What the research found
+
+`python3 -m trading_bot research data/SPY.csv data/QQQ.csv ...` compares a FIXED list of rules (hold, 200-day filter,
+200-day with a 1% band, monthly 10-month filter, 50/100/200 ensemble) plus the original bot on every market you give it,
+on the whole history and on each half. The rules cannot be tuned from the command line, on purpose.
+
+Pre-declared pass bar: a rule is only worth running if it earns at least as much as holding AND has a shallower worst
+drop in at least two-thirds of all market/period cells, with a non-negative average return vs holding.
+
+Result on SPY, QQQ, IWM, EFA, EEM, TLT, GLD (history of 21-33 years each, dividend-adjusted, 5 bps cost, cash earning 0%):
+
+| Rule | Cells won (needed 14 of 21) | Average vs holding, per year |
+|---|---|---|
+| monthly 10-month filter (best) | 6 / 21 | -1.5 points |
+| 200-day filter | 3 / 21 | -2.4 points |
+| original bot | 2 / 21 | -5.6 points |
+
+**Nothing passed.** Trend rules did roughly halve the worst drop (SPY -55% -> -27%) but cost about 1 to 1.5 points a year
+(SPY: 9.7% vs 10.9%), and on 6 of 7 markets they earned less than just holding. Why the original bot lagged: risk-based
+position sizing kept only about a third of the account invested on average; the stop-loss churn was a minor cost.
+
+Caveats: cash earned 0% (use `--cash-rate 0.03` to see the effect; it narrows gaps by roughly half a point, not to zero),
+no taxes, only daily/monthly long-only rules on seven liquid ETFs. The scoreboard cells overlap and markets move
+together, so "X of 21" is weaker evidence than it looks. Independent audits (a from-scratch reimplementation and
+adversarial review) found no look-ahead and matched the numbers to floating-point precision.
 
 ## Paper trade (fake money, real market data)
 

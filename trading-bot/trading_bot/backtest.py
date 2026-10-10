@@ -74,10 +74,12 @@ def run_backtest(
     capital: float = 10_000.0,
     slippage_bps: float = 5.0,
     symbol: str = "?",
+    cash_rate: float = 0.0,
 ) -> Result:
     strategy = strategy or TrendStrategy()
     limits = limits or RiskLimits()
     slip = slippage_bps / 10_000
+    cash_d = (1 + cash_rate) ** (1 / TRADING_DAYS) - 1  # daily interest on idle cash (0 unless asked for)
     start = strategy.first_ready_index
     if len(bars) < start + 30:
         raise ValueError(f"{symbol}: need at least {start + 30} bars, got {len(bars)}")
@@ -90,6 +92,7 @@ def run_backtest(
     trades: list[Trade] = []
     curve: list[tuple[str, float]] = []
     in_market = 0
+    invested_sum = 0.0  # running total of (value of shares / equity), to report how much of the account was really invested
 
     def close_out(day: str, price: float, reason: str) -> None:
         nonlocal cash, shares
@@ -100,6 +103,7 @@ def run_backtest(
 
     for i in range(start, len(bars)):
         bar = bars[i]
+        cash *= 1 + cash_d
 
         # 1) fill yesterday's decision at today's open
         if pending:
@@ -125,6 +129,7 @@ def run_backtest(
         equity = cash + shares * bar.close
         curve.append((bar.day, equity))
         in_market += shares > 0
+        invested_sum += shares * bar.close / equity
 
         # 4) kill switch
         if guard.update(equity) and halted_on is None:
@@ -154,6 +159,7 @@ def run_backtest(
         "trades": len(trades),
         "win_rate": len(wins) / len(closed) if closed else 0.0,
         "exposure": in_market / len(curve),
+        "avg_invested": invested_sum / len(curve),
     }
     return result
 
@@ -182,7 +188,8 @@ def format_report(r: Result) -> str:
         f"{'Return per year (CAGR)':22}{pct(m['cagr']):>10}{pct(m['bh_cagr']):>12}",
         f"{'Worst drawdown':22}{pct(m['max_drawdown']):>10}{pct(m['bh_max_drawdown']):>12}",
         f"{'Sharpe (rf=0)':22}{m['sharpe']:>10.2f}{m['bh_sharpe']:>12.2f}",
-        f"Trades: {int(m['trades'])}   win rate: {m['win_rate'] * 100:.0f}%   time in market: {m['exposure'] * 100:.0f}%",
+        f"Trades: {int(m['trades'])}   win rate: {m['win_rate'] * 100:.0f}%   time in market: {m['exposure'] * 100:.0f}%"
+        f"   (but only {m['avg_invested'] * 100:.0f}% of the account was invested on average)",
     ]
     if r.halted_on:
         lines.append(f"!! Kill switch tripped on {r.halted_on}: the bot stopped trading for the rest of the test.")

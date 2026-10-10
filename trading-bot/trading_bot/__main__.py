@@ -75,6 +75,8 @@ def _run(a: argparse.Namespace) -> None:
     elif a.cmd == "research":
         if not 0 <= a.cash_rate < 0.25:
             raise ValueError(f"cash rate must be a fraction like 0.02 for 2%, got {a.cash_rate}")
+        if not 0 <= a.cost_bps <= 500:
+            raise ValueError(f"cost must be between 0 and 500 basis points (5 means 0.05%), got {a.cost_bps}")
         results = []
         for path in a.csv:
             res = evaluate(Path(path).stem, load_csv(path), a.cost_bps, a.cash_rate, a.eval_from, a.eval_to)
