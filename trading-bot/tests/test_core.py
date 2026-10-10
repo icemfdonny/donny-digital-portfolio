@@ -235,3 +235,43 @@ class CsvLoading(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class YahooAdjustment(unittest.TestCase):
+    """fetch_yahoo parsing, with the network call replaced by a fake payload."""
+
+    def fetch(self, adj, n=5):
+        import io
+        import json
+        from unittest import mock
+        from trading_bot.data import fetch_yahoo
+        closes = [100 + i for i in range(n)]
+        payload = {"chart": {"result": [{
+            "timestamp": [1_600_000_000 + 86_400 * i for i in range(n)],
+            "indicators": {
+                "quote": [{"open": closes, "high": [c + 1 for c in closes], "low": [c - 1 for c in closes],
+                           "close": closes, "volume": [1] * n}],
+                **({"adjclose": [{"adjclose": adj}]} if adj is not None else {}),
+            }}], "error": None}}
+        with mock.patch("urllib.request.urlopen", return_value=io.BytesIO(json.dumps(payload).encode())):
+            return fetch_yahoo("TEST", 1)
+
+    def test_all_prices_scaled_by_adjusted_close_factor(self):
+        bars = self.fetch([0.8 * (100 + i) for i in range(5)])
+        self.assertEqual([round(b.close, 6) for b in bars], [80.0, 80.8, 81.6, 82.4, 83.2])
+
+    def test_row_with_missing_adjusted_close_is_dropped_not_left_raw(self):
+        for bad in (None, 0):
+            adj = [0.8 * (100 + i) for i in range(5)]
+            adj[2] = bad
+            bars = self.fetch(adj)
+            self.assertEqual(len(bars), 4)  # the row is gone ...
+            self.assertTrue(all(b.close < 90 for b in bars), "a raw (unadjusted) price leaked in")  # ... not kept at 102
+
+    def test_many_missing_adjusted_closes_is_an_error(self):
+        adj = [None] * 8 + [80.0, 81.0]
+        with self.assertRaises(ValueError):
+            self.fetch(adj, n=10)
+
+    def test_payload_without_adjusted_series_is_used_as_is(self):
+        self.assertEqual(round(self.fetch(None)[2].close, 6), 102.0)

@@ -101,17 +101,25 @@ def fetch_yahoo(symbol: str, years: int = 15) -> list[Bar]:
     result = result[0]
     q = result["indicators"]["quote"][0]
     adj = result["indicators"].get("adjclose", [{}])[0].get("adjclose")
-    bars = []
+    bars, skipped = [], 0
     for i, ts in enumerate(result["timestamp"]):
         try:
             o, h, l, c = q["open"][i], q["high"][i], q["low"][i], q["close"][i]
             if None in (o, h, l, c):
                 continue
-            f = (adj[i] / c) if adj and adj[i] else 1.0
+            if adj is not None:
+                if not adj[i]:  # missing/zero adjusted close: a raw price among adjusted ones would fake a crash, so drop the row
+                    skipped += 1
+                    continue
+                f = adj[i] / c
+            else:
+                f = 1.0
             day = datetime.fromtimestamp(ts, tz=timezone.utc).date().isoformat()
             bars.append(Bar(day, o * f, h * f, l * f, c * f, q["volume"][i] or 0))
         except (IndexError, TypeError):
             continue
+    if skipped > max(3, len(bars) // 100):
+        raise ValueError(f"Yahoo data for {symbol} is missing adjusted prices on {skipped} days; refusing to use it")
     return _validate(bars, f"yahoo:{symbol}")
 
 
