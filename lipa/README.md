@@ -38,7 +38,7 @@ Create a second Vercel project from this repository and set **Root Directory** t
 - `src/config.ts`: name, address, phone, e-mail, opening hours, holidays, lunch hours, ordering rules, promo codes, and the studio details used in the demo badge (`STUDIO.url` links the badge to the portfolio).
 - `src/data/`: menu (`menu.ts`), lunch pools (`lunch.ts`), wines and drinks (`drinks.ts`), events (`events.ts`), reviews, team, suppliers, spaces, delivery zones and voucher options (`content.ts`), photo slots (`photos.ts`).
 - Colours and fonts: the `@theme` block in `src/index.css`.
-- Photos: see [PHOTOS.md](PHOTOS.md).
+- Photos: Unsplash photos in `public/images/`; sources and how to swap them are in [PHOTOS.md](PHOTOS.md).
 
 ## How the demo works
 

@@ -113,7 +113,7 @@ const TEMPLATES: Template[] = [
     capacity: 40,
     lead: "Päť chodov pre dvoch, sviečky a pohár ružového šampanského na privítanie.",
     includes: ["5-chodové menu", "Aperitív", "Pamätná fotografia"],
-    photo: "eventChef",
+    photo: "eventValentine",
     occurs: onDate(1, 14),
   },
 ];

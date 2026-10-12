@@ -12,7 +12,7 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 import { ALLERGENS, DIET_LABELS, type DietTag } from "../data/menu";
-import { PHOTOS, photoSrc, type PhotoKey } from "../data/photos";
+import { PHOTOS, photoSrc, type PhotoDef, type PhotoKey } from "../data/photos";
 import { useReveal } from "../lib/hooks";
 import { Leaf, Minus, Plus, Star, X } from "./icons";
 
@@ -42,7 +42,7 @@ export function Photo({
   /** Where the placeholder names the slot; "top" for cards with text over the bottom. */
   labelAt?: "top" | "bottom";
 }) {
-  const photo = PHOTOS[name];
+  const photo: PhotoDef = PHOTOS[name];
   const src = photoSrc(name);
   const [state, setState] = useState<"loading" | "loaded" | "missing">(() =>
     loadedPhotos.has(src) ? (loadedPhotos.get(src) ? "loaded" : "missing") : "loading",
@@ -65,6 +65,7 @@ export function Photo({
             loadedPhotos.set(src, false);
             setState("missing");
           }}
+          style={photo.focus ? { objectPosition: photo.focus } : undefined}
           className={`absolute inset-0 size-full object-cover transition-opacity duration-700 ${state === "loaded" ? "opacity-100" : "opacity-0"} ${imgClassName}`}
         />
       )}
