@@ -39,7 +39,9 @@ function Hero() {
       <div className="absolute inset-0">
         <Photo name="hero" priority className="size-full" showLabel={false} />
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(18_26_21/0.55)_0%,rgb(18_26_21/0.25)_35%,rgb(18_26_21/0.85)_100%)]" />
+      {/* Darker on the left and bottom, where the headline and the booking widget sit. */}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(18_26_21/0.6)_0%,rgb(18_26_21/0.3)_40%,rgb(18_26_21/0.88)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(18_26_21/0.78)_0%,rgb(18_26_21/0.45)_45%,transparent_75%)]" />
       <div className="container-page relative flex flex-1 flex-col justify-end pb-8 pt-32 sm:pb-12">
         <div className="max-w-3xl">
           <p className="eyebrow mb-5 flex items-center gap-2 text-honey animate-rise">

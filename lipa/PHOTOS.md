@@ -1,48 +1,46 @@
-# Photos for the Lipa demo
+# Photos
 
-Every photo slot is listed in `src/data/photos.ts`. Save a file with the exact name below into `public/images/` and it appears on the site; until then the slot shows a dark green placeholder with its label.
+All 28 photos are from [Unsplash](https://unsplash.com) and fall under the [Unsplash License](https://unsplash.com/license): free for commercial use, no attribution required. Each one was checked by eye for its slot, resized to about 1600 px on the long side (the hero to 2400 px) and compressed to roughly 80–440 KB.
 
-Tips:
+The slots are defined in `src/data/photos.ts` (file name, Slovak alt text, and an optional focal point for cropping). A slot whose file is missing shows a dark green placeholder with its label.
 
-- Unsplash and Pexels photos are free to use commercially without attribution. Download the **large** size, not the original.
-- Keep files around **1600–2400 px on the long side** and under ~400 KB (squoosh.app or `cwebp` work well). Use the `.jpg` names below, or change the extensions in `src/data/photos.ts`.
-- Photos are cropped with `object-fit: cover`, so keep the subject roughly centred.
-- Pick a consistent mood: warm light, dark wood, natural textures. Avoid bright studio-white food shots next to moody interiors.
+## Replacing a photo
 
-## Must-have (the homepage and menu use these first)
+1. Save the new image under the same file name in `public/images/`. Aim for 1600 px on the long side and under ~300 KB (squoosh.app works well).
+2. If the subject is off-centre, set `focus` for that slot in `src/data/photos.ts`, e.g. `focus: "70% 40%"`.
+3. Update the alt text in the same file so it describes the new photo.
 
-| File | Where it shows | What to look for | Search terms |
+To give a dish without a photo one (bryndzové halušky and pečená cvikla currently have none), add a slot to `PHOTOS` and set `photo` on the dish in `src/data/menu.ts`.
+
+## Sources
+
+| File | Used for | Size | Source |
 |---|---|---|---|
-| `hero.jpg` | Homepage hero, full screen, dark overlay | Dining room or a table at night, warm light, some depth | `restaurant interior night`, `dinner table candle` |
-| `dish-tartare.jpg` | Signature dishes, menu | Beef tartare with egg yolk, top-down or 45° | `beef tartare` |
-| `dish-halusky.jpg` | Signature dishes, menu | Gnocchi-like dumplings with cheese and bacon (bryndzové halušky) | `bryndzove halusky`, `gnocchi bacon cheese` |
-| `dish-duck.jpg` | Signature dishes, menu | Roast duck leg with red cabbage | `roast duck leg` |
-| `dish-steak.jpg` | Signature dishes, menu | Sliced rib-eye on a board | `ribeye steak sliced` |
-| `dish-dessert.jpg` | Signature dishes, menu | Rustic dessert, poppy seed or pear | `poppy seed dessert`, `pear dessert plate` |
-| `kitchen.jpg` | Homepage "Náš príbeh", portrait | Open kitchen, flames or chef plating | `open kitchen fire`, `chef plating` |
-| `interior.jpg` | Spaces, About, portrait | Dining room by day, wooden tables | `bistro interior wood` |
-| `terrace.jpg` | Spaces, "Navštívte nás" | Courtyard terrace with a tree, string lights | `courtyard restaurant terrace` |
-| `bar.jpg` | Spaces | Wine bar counter, bottles on shelves | `wine bar counter` |
-
-## Nice to have
-
-| File | Where it shows | What to look for | Search terms |
-|---|---|---|---|
-| `private-room.jpg` | Spaces | Long set table in a private room | `private dining room long table` |
-| `dish-beetroot.jpg` | Menu | Roasted beetroot with goat cheese | `beetroot goat cheese salad` |
-| `dish-cheese.jpg` | Menu | Cheese board with nuts | `cheese board walnuts` |
-| `dish-cheeks.jpg` | Menu | Braised beef with mash | `braised beef cheeks puree` |
-| `dish-fish.jpg` | Menu | Pan-fried white fish fillet with lentils | `pike perch fillet`, `white fish lentils` |
-| `dish-burger.jpg` | Menu, ordering | Burger with fries | `gourmet burger fries` |
-| `event-wine.jpg` | Events | Wine tasting, several glasses on a table | `wine tasting table` |
-| `event-jazz.jpg` | Events | Small jazz band playing at night | `jazz trio live` |
-| `event-chef.jpg` | Events | Chef serving at a chef's table | `chefs table tasting menu` |
-| `event-bread.jpg` | Events | Sourdough loaves | `sourdough bread loaf` |
-| `event-goose.jpg` | Events (November) | Roast goose | `roast goose` |
-| `event-new-year.jpg` | Events (December) | Champagne toast | `champagne toast` |
-| `chef.jpg` | About, team, portrait | Chef portrait in the kitchen | `chef portrait kitchen` |
-| `sommelier.jpg` | About, team, portrait | Sommelier with a bottle | `sommelier portrait` |
-| `manager.jpg` | About, team, portrait | Restaurant manager or host | `restaurant manager portrait` |
-| `farm.jpg` | About, suppliers | Crate of fresh vegetables | `vegetables crate farm` |
-
-When the photos are in, regenerate the portfolio screenshots of the site at 1600×1000 for `public/work/` in the portfolio.
+| `hero.jpg` | Homepage hero | 2400×1600 · 438 KB | https://images.unsplash.com/photo-1517248135467-4c7edcad34c4 |
+| `interior.jpg` | Spaces, About | 1200×1600 · 282 KB | https://images.unsplash.com/photo-1537047902294-62a40c20a6ae |
+| `bar.jpg` | Spaces (vínny bar) | 1067×1600 · 279 KB | https://images.unsplash.com/photo-1578911373434-0cb395d2cbfb |
+| `terrace.jpg` | Spaces, Navštívte nás | 1600×1067 · 285 KB | https://images.unsplash.com/photo-1600093463592-8e36ae95ef56 |
+| `private-room.jpg` | Spaces (salónik) | 1600×1067 · 179 KB | https://images.unsplash.com/photo-1574966739987-65e38db0f7ce |
+| `kitchen.jpg` | Homepage story, About gallery | 1600×1067 · 223 KB | https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf |
+| `chef.jpg` | About, team | 1039×1600 · 212 KB | https://images.unsplash.com/photo-1577219491135-ce391730fb2c |
+| `sommelier.jpg` | About, team | 1067×1600 · 237 KB | https://images.unsplash.com/photo-1553361371-9b22f78e8b1d |
+| `manager.jpg` | About, team | 1600×1201 · 169 KB | https://images.unsplash.com/photo-1556745753-b2904692b3cd |
+| `farm.jpg` | About, suppliers | 1067×1600 · 260 KB | https://images.unsplash.com/photo-1563865436874-9aef32095fad |
+| `dish-tartare.jpg` | Tatarák | 1600×1067 · 250 KB | https://images.unsplash.com/photo-1615937691194-97dbd3f3dc29 |
+| `dish-cheese.jpg` | Syry slovenských farmárov | 1600×1068 · 226 KB | https://images.unsplash.com/photo-1452195100486-9cc805987862 |
+| `dish-duck.jpg` | Pečená kačica pre dvoch | 1068×1600 · 271 KB | https://images.unsplash.com/photo-1598103442097-8b74394b95c6 |
+| `dish-cheeks.jpg` | Hovädzie líčka | 1060×1600 · 225 KB | https://images.unsplash.com/photo-1432139509613-5c4255815697 |
+| `dish-fish.jpg` | Zubáč na masle | 1067×1600 · 182 KB | https://images.unsplash.com/photo-1467003909585-2f8a72700288 |
+| `dish-burger.jpg` | Lipa burger | 1600×1329 · 213 KB | https://images.unsplash.com/photo-1568901346375-23c9450c58cd |
+| `dish-steak.jpg` | Rib-eye steak | 1600×1067 · 292 KB | https://images.unsplash.com/photo-1546964124-0cce460f38ef |
+| `dish-dessert.jpg` | Čokoládový fondant | 1600×1067 · 203 KB | https://images.unsplash.com/photo-1624353365286-3f8d62daad51 |
+| `dish-risotto.jpg` | Rizoto s lesnými hubami | 1600×1068 · 80 KB | https://images.unsplash.com/photo-1476124369491-e7addf5db371 |
+| `dish-pork.jpg` | Bravčová panenka | 1600×1060 · 250 KB | https://images.unsplash.com/photo-1432139555190-58524dae6a55 |
+| `dish-flank.jpg` | Flank steak | 1600×900 · 205 KB | https://images.unsplash.com/photo-1558030006-450675393462 |
+| `event-wine.jpg` | Vínny štvrtok | 1600×1067 · 144 KB | https://images.unsplash.com/photo-1519671482749-fd09be7ccebf |
+| `event-jazz.jpg` | Jazz pod lipou | 1600×1067 · 244 KB | https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f |
+| `event-chef.jpg` | Večer so šéfkuchárom | 1067×1600 · 194 KB | https://images.unsplash.com/photo-1572715376701-98568319fd0b |
+| `event-valentine.jpg` | Valentínska večera | 1600×1067 · 245 KB | https://images.unsplash.com/photo-1414235077428-338989a2e8c0 |
+| `event-bread.jpg` | Kurz kváskového chleba | 1600×1064 · 313 KB | https://images.unsplash.com/photo-1509440159596-0249088772ff |
+| `event-goose.jpg` | Martinská hus | 1600×1067 · 270 KB | https://images.unsplash.com/photo-1606728035253-49e8a23146de |
+| `event-new-year.jpg` | Silvester | 1600×1068 · 75 KB | https://images.unsplash.com/photo-1467810563316-b5476525c0f9 |

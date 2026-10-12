@@ -136,7 +136,6 @@ export const DISHES: Dish[] = [
     allergens: [7, 8],
     diet: ["vegetarian", "glutenFree"],
     highlight: ["seasonal"],
-    photo: "dishBeetroot",
     pairing: "rose",
   },
   {
@@ -233,7 +232,6 @@ export const DISHES: Dish[] = [
     allergens: [1, 3, 7],
     diet: [],
     highlight: ["signature", "local"],
-    photo: "dishHalusky",
     pairing: "veltlin",
     options: [
       {
@@ -251,10 +249,10 @@ export const DISHES: Dish[] = [
   {
     id: "kacica",
     category: "hlavne",
-    name: "Konfitované kačacie stehno",
-    description: "Červená kapusta s brusnicami, zemiakové lokše, výpek",
-    portion: "350 g",
-    price: 19.9,
+    name: "Pečená kačica pre dvoch",
+    description: "Celá kačica na zdieľanie, červená kapusta s brusnicami, zemiakové lokše, výpek",
+    portion: "1 ks · pre 2 osoby",
+    price: 44,
     allergens: [1, 7, 9, 12],
     diet: [],
     highlight: ["signature"],
@@ -270,6 +268,7 @@ export const DISHES: Dish[] = [
     price: 22.9,
     allergens: [7, 9, 12],
     diet: ["glutenFree"],
+    highlight: ["signature"],
     photo: "dishCheeks",
     pairing: "cabernet",
   },
@@ -295,6 +294,7 @@ export const DISHES: Dish[] = [
     allergens: [7, 9, 12],
     diet: ["vegetarian", "glutenFree"],
     highlight: ["seasonal"],
+    photo: "dishRisotto",
     pairing: "chardonnay",
   },
   {
@@ -380,6 +380,7 @@ export const DISHES: Dish[] = [
     price: 26.9,
     allergens: [],
     diet: ["glutenFree"],
+    photo: "dishFlank",
     pairing: "dunaj",
     options: [DONENESS, STEAK_SIDE],
   },
@@ -392,6 +393,7 @@ export const DISHES: Dish[] = [
     price: 21.9,
     allergens: [7, 10],
     diet: ["glutenFree"],
+    photo: "dishPork",
     pairing: "frankovka",
     options: [STEAK_SIDE],
   },
@@ -414,7 +416,6 @@ export const DISHES: Dish[] = [
     allergens: [1, 3, 7],
     diet: ["vegetarian"],
     highlight: ["signature", "local"],
-    photo: "dishDessert",
     pairing: "tokaj",
   },
   {
@@ -426,6 +427,8 @@ export const DISHES: Dish[] = [
     price: 8.5,
     allergens: [1, 3, 7],
     diet: ["vegetarian"],
+    highlight: ["signature"],
+    photo: "dishDessert",
     pairing: "ladove",
   },
   {

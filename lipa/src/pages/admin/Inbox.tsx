@@ -93,13 +93,13 @@ export default function Inbox({ db, now }: { db: DB; now: Date }) {
         </ul>
       </Panel>
 
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         <Panel title="Darčekové poukážky" action={<span className="text-xs text-mute">predané {formatPrice(vouchersSold)}</span>}>
           <ul className="divide-y divide-line">
             {db.vouchers.map((v) => (
               <li key={v.code} className="flex items-center gap-3 px-5 py-3 text-sm">
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium tabular-nums">{v.code}</span>
+                  <span className="block truncate font-medium tabular-nums">{v.code}</span>
                   <span className="block truncate text-xs text-mute">
                     Príjemca: {v.to} · platí do {formatDateNumeric(new Date(v.validUntil))}
                   </span>
