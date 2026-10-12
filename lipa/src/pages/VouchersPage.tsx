@@ -107,7 +107,8 @@ export default function VouchersPage() {
           }
         >
           <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-cream/10 px-4 py-2 text-sm text-cream/75">
-            <Sparkles size={16} /> Ukážka: kód funguje aj v online objednávke. Skúste ho v košíku.
+            <Sparkles size={16} />{" "}
+            {bought.kind === "value" ? "Ukážka: kód funguje aj v online objednávke. Skúste ho v košíku." : "Ukážka: zostatok overíte nižšie na stránke poukážok."}
           </p>
         </PageHero>
         <div className="container-page grid items-start gap-10 py-14 lg:grid-cols-[minmax(0,520px)_1fr]">
@@ -118,7 +119,10 @@ export default function VouchersPage() {
             <div className="card p-6">
               <p className="text-sm text-mute">Kód poukážky</p>
               <p className="mt-1 font-display text-3xl tracking-wide tabular-nums text-forest">{bought.code}</p>
-              <p className="mt-2 text-sm text-soft">Platí 12 mesiacov, do {formatDateFull(new Date(bought.validUntil))}. Dá sa uplatniť v reštaurácii aj pri objednávke cez web, aj po častiach.</p>
+              <p className="mt-2 text-sm text-soft">Platí 12 mesiacov, do {formatDateFull(new Date(bought.validUntil))}.{" "}
+                {bought.kind === "value"
+                  ? "Dá sa uplatniť v reštaurácii aj pri objednávke cez web, aj po častiach."
+                  : "Pri rezervácii stačí uviesť kód do poznámky, o zvyšok sa postaráme."}</p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <button type="button" className="btn-primary" onClick={() => window.print()}>
                   <Printer size={17} /> Vytlačiť alebo PDF
