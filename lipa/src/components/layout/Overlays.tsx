@@ -216,10 +216,10 @@ function DemoBadge() {
                 Navrhol a naprogramoval{" "}
                 {STUDIO.url ? (
                   <a href={STUDIO.url} className="text-cream/75 hover:text-cream" target="_blank" rel="noreferrer">
-                    {STUDIO.name}
+                    {STUDIO.author}
                   </a>
                 ) : (
-                  <span className="text-cream/75">{STUDIO.name}</span>
+                  <span className="text-cream/75">{STUDIO.author}</span>
                 )}
               </span>
               <button

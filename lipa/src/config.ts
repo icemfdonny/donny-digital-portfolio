@@ -24,6 +24,8 @@ export const RESTAURANT = {
 /** The studio behind the demo, shown in the demo badge and footer. */
 export const STUDIO = {
   name: "Donny Digital",
+  /** Credited as designer and developer in the demo badge. */
+  author: "Darien Ďalog",
   email: "donnydigital.darien@gmail.com",
   /** Portfolio address; leave empty to link to e-mail only. */
   url: "",
