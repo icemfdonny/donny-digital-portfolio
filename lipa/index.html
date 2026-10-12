@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#1c2b21" />
+    <title>Lipa – kuchyňa & vínny bar · Bratislava</title>
+    <meta
+      name="description"
+      content="Sezónna kuchyňa, slovenské vína a dlhé večery v srdci Bratislavy. Obedové menu, rezervácia stola online, rozvoz a darčekové poukážky."
+    />
+    <meta property="og:type" content="restaurant.restaurant" />
+    <meta property="og:locale" content="sk_SK" />
+    <meta property="og:title" content="Lipa – kuchyňa & vínny bar" />
+    <meta property="og:description" content="Sezónna kuchyňa, slovenské vína a dlhé večery v srdci Bratislavy." />
+    <meta property="og:image" content="/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": "Lipa – kuchyňa & vínny bar",
+        "servesCuisine": ["Slovenská", "Stredoeurópska", "Sezónna"],
+        "priceRange": "€€",
+        "acceptsReservations": "True",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Lipová 7",
+          "addressLocality": "Bratislava",
+          "postalCode": "811 01",
+          "addressCountry": "SK"
+        },
+        "openingHoursSpecification": [
+          { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"], "opens": "11:00", "closes": "23:00" },
+          { "@type": "OpeningHoursSpecification", "dayOfWeek": "Friday", "opens": "11:00", "closes": "24:00" },
+          { "@type": "OpeningHoursSpecification", "dayOfWeek": "Saturday", "opens": "12:00", "closes": "24:00" },
+          { "@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "12:00", "closes": "21:00" }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
