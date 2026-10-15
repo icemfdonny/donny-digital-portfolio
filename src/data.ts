@@ -2,7 +2,7 @@ export const EMAIL = "donnydigital.darien@gmail.com";
 
 export const SOCIALS = [
   { label: "GitHub", href: "https://github.com/icemfdonny" },
-  { label: "LinkedIn", href: "https://linkedin.com/" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/darien-%C4%8Falog-26b966442/" },
 ] as const;
 
 export type ProjectGroup = "Websites" | "Brand" | "Experiments";
