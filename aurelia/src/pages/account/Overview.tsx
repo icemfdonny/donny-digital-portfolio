@@ -16,6 +16,12 @@ import { useVisit } from "../../lib/visit";
 
 type Loyalty = ReturnType<typeof loyaltyState>;
 
+function countdown(hours: number) {
+  if (hours < 24) return `o ${Math.max(1, Math.round(hours))} h`;
+  const days = Math.floor(hours / 24);
+  return `o ${days} ${days === 1 ? "deň" : days < 5 ? "dni" : "dní"}`;
+}
+
 export default function Overview({ account, loyalty, now, onTab }: { account: Account; loyalty: Loyalty; now: Date; onTab: (t: "terminy" | "body") => void }) {
   const db = useDB();
   const navigate = useNavigate();
@@ -69,7 +75,7 @@ export default function Overview({ account, loyalty, now, onTab }: { account: Ac
                   <p className="mt-2 text-sm text-soft">{capitalize(formatDateLong(fromISODate(next.date)))}</p>
                 </div>
                 <p className="flex items-center gap-1.5 rounded-full bg-blush px-3 py-1.5 text-sm text-plum">
-                  <Clock size={14} /> {hoursUntil(next, now) < 24 ? `o ${Math.max(1, Math.round(hoursUntil(next, now)))} h` : `o ${Math.ceil(hoursUntil(next, now) / 24)} dní`}
+                  <Clock size={14} /> {countdown(hoursUntil(next, now))}
                 </p>
               </div>
               <ul className="mt-5 space-y-3">
