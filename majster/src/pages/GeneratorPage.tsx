@@ -7,14 +7,13 @@ import { STUDIO } from "../config";
 import { TRADE_LIST, TRADES, isTradeId, type TradeId } from "../data/trades";
 import { findTown, useGeo } from "../lib/geo";
 import { usePageMeta } from "../lib/hooks";
-import { buildLink } from "../lib/profile";
+import { buildLink, tradeOrigin } from "../lib/profile";
 
 /** Cold-mail helper for the studio: personalised demo links and a ready e-mail, one by one or in bulk. */
 export default function GeneratorPage() {
   usePageMeta("Generátor odkazov");
   const toast = useToast();
   const geo = useGeo();
-  const origin = window.location.origin;
   const [mode, setMode] = useState<"single" | "bulk">("single");
   const [trade, setTrade] = useState<TradeId>("elektrikar");
   const [name, setName] = useState("");
@@ -23,7 +22,7 @@ export default function GeneratorPage() {
   const [owner, setOwner] = useState("");
   const [bulk, setBulk] = useState("elektrikar; Novák Elektro; Žilina; 0905 123 456; Peter\nstolar; Drevo Kováč; Martin; ; \nmaliar; Farby Horváth; Poprad; 0911 222 333; ");
 
-  const link = buildLink(origin, { trade, name, city: town?.name, phone, owner });
+  const link = buildLink({ trade, name, city: town?.name, phone, owner });
   const mail = emailFor(trade, name, link);
   const copy = (text: string, what: string) => {
     void navigator.clipboard?.writeText(text).then(
@@ -41,9 +40,9 @@ export default function GeneratorPage() {
         .map(([t = "", firm = "", city = "", tel = "", own = ""]) => {
           const tradeId = isTradeId(t.toLowerCase()) ? (t.toLowerCase() as TradeId) : null;
           const known = !city || !geo || !!findTown(city, geo.towns);
-          return { tradeId, firm, city, known, url: tradeId ? buildLink(origin, { trade: tradeId, name: firm, city, phone: tel, owner: own }) : "" };
+          return { tradeId, firm, city, known, url: tradeId ? buildLink({ trade: tradeId, name: firm, city, phone: tel, owner: own }) : "" };
         }),
-    [bulk, geo, origin],
+    [bulk, geo],
   );
 
   const csv = () => {
@@ -101,6 +100,7 @@ export default function GeneratorPage() {
             <div className="space-y-4">
               <div className="card p-6">
                 <p className="field-label">Odkaz</p>
+                <p className="mb-2 text-xs text-mute">Ukážka sa otvorí na adrese {tradeOrigin(trade).replace(/^https?:\/\//, "")}</p>
                 <p className="break-all rounded-xl bg-bg p-3 font-mono text-sm">{link}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" className="btn-dark btn-sm" onClick={() => copy(link, "Odkaz")}>

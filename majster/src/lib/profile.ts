@@ -6,6 +6,9 @@ import { formatPhone, normalizePhone } from "./format";
  *   /?remeslo=instalater&firma=Novák%20Inštalácie&mesto=Žilina&tel=0905123456&meno=Peter
  * turns the demo into "their" website. The profile is remembered, so links inside the site stay clean, and it is
  * read once before the first render. Switching trade reloads the page.
+ *
+ * The trade can also come from the address: one deployment can serve elektro.donny-digital.com,
+ * stolar.donny-digital.com and so on (see TRADE_HOSTS), so each trade has its own clean link.
  */
 export type Profile = { trade: TradeId; name: string; city: string; phone: string; owner: string; personalized: boolean };
 
@@ -13,6 +16,33 @@ const KEY = "majster-profile";
 
 /** URL parameters, with short aliases for hand-typed links. */
 const PARAMS = { trade: ["remeslo", "r"], name: ["firma", "f"], city: ["mesto", "m"], phone: ["tel", "t"], owner: ["meno", "o"] } as const;
+
+/** Subdomains that select a trade. The first one of each is used when the site builds links. */
+export const TRADE_HOSTS: Record<TradeId, string[]> = {
+  elektrikar: ["elektro", "elektrikar"],
+  instalater: ["instalater", "voda", "kurenie"],
+  stolar: ["stolar", "drevo"],
+  obkladac: ["obklady", "obkladac"],
+  maliar: ["maliar", "malovanie"],
+};
+
+/** The trade named by the first label of the host name, e.g. "stolar" in stolar.donny-digital.com. */
+function hostTrade(): TradeId | null {
+  const labels = window.location.hostname.toLowerCase().split(".");
+  if (labels.length < 3) return null;
+  return (Object.keys(TRADE_HOSTS) as TradeId[]).find((t) => TRADE_HOSTS[t].includes(labels[0])) ?? null;
+}
+
+/** Where a trade lives: its own subdomain when the site runs on trade subdomains, otherwise this origin. */
+export function tradeOrigin(trade: TradeId) {
+  const { protocol, hostname, port } = window.location;
+  if (!hostTrade()) return window.location.origin;
+  const rest = hostname.split(".").slice(1).join(".");
+  return `${protocol}//${TRADE_HOSTS[trade][0]}.${rest}${port ? `:${port}` : ""}`;
+}
+
+/** Link that opens a trade's sample business (used by the trade switcher in the demo badge). */
+export const tradeSampleLink = (trade: TradeId) => `${tradeOrigin(trade)}/?remeslo=${trade}`;
 
 const clean = (value: string | null, max: number) => (value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -31,10 +61,11 @@ function read(): Profile {
   const urlPhone = clean(get(PARAMS.phone), 20);
   const urlOwner = clean(get(PARAMS.owner), 24);
   const fromUrl = urlTrade !== null || urlName || urlCity || urlPhone || urlOwner;
+  const host = hostTrade();
 
   let profile: Profile;
   if (fromUrl) {
-    const trade = isTradeId(urlTrade) ? urlTrade : isTradeId(stored.trade) ? stored.trade : DEFAULT_TRADE;
+    const trade = isTradeId(urlTrade) ? urlTrade : (host ?? (isTradeId(stored.trade) ? stored.trade : DEFAULT_TRADE));
     // A link that only switches the trade shows that trade's own sample business.
     const personalized = !!(urlName || urlCity || urlPhone);
     const sameTrade = trade === stored.trade && stored.personalized;
@@ -50,6 +81,9 @@ function read(): Profile {
     for (const keys of Object.values(PARAMS)) for (const k of keys) url.delete(k);
     const rest = url.toString();
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${rest ? `?${rest}` : ""}${window.location.hash}`);
+  } else if (host && stored.trade !== host) {
+    // On a trade subdomain the address decides; show that trade's sample business.
+    profile = { trade: host, name: "", city: "", phone: "", owner: "", personalized: false };
   } else {
     profile = {
       trade: isTradeId(stored.trade) ? stored.trade : DEFAULT_TRADE,
@@ -128,13 +162,18 @@ function faviconFor(bg: string, fg: string, letters: string) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-/** Builds a personalised link for a prospect (used by the /generator page). */
-export function buildLink(origin: string, p: { trade: TradeId; name?: string; city?: string; phone?: string; owner?: string }) {
+/**
+ * Builds a personalised link for a prospect (used by the /generator page). On trade subdomains the subdomain
+ * carries the trade, so the link stays short: stolar.donny-digital.com/?firma=…
+ */
+export function buildLink(p: { trade: TradeId; name?: string; city?: string; phone?: string; owner?: string }) {
+  const origin = tradeOrigin(p.trade);
   const q = new URLSearchParams();
-  q.set("remeslo", p.trade);
+  if (!hostTrade()) q.set("remeslo", p.trade);
   if (p.name?.trim()) q.set("firma", p.name.trim());
   if (p.city?.trim()) q.set("mesto", p.city.trim());
   if (p.phone?.trim()) q.set("tel", p.phone.replace(/\s+/g, ""));
   if (p.owner?.trim()) q.set("meno", p.owner.trim());
-  return `${origin}/?${q.toString().replace(/\+/g, "%20")}`;
+  const query = q.toString().replace(/\+/g, "%20");
+  return `${origin}/${query ? `?${query}` : ""}`;
 }
