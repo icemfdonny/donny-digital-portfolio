@@ -43,23 +43,39 @@ export function AreaMap({
       return x > 24 && x < W - 24 && y > 20 && y < H - 16;
     };
     const minRank = spanKm > 14 ? 2 : 1;
-    // Greedy label placement, larger places first, so names never sit on top of each other.
-    const placed: { x: number; y: number; w: number }[] = [project(base)].map((p) => ({ ...p, w: 90 }));
-    if (target) placed.push({ ...project(target), w: 130 });
+    // Greedy label placement, larger places first, so no name sits on another name, the firm's marker, the
+    // customer's tag or the radius captions. Boxes are left edge, vertical centre and width in viewBox units.
+    type Box = { x: number; y: number; w: number; h: number };
+    const hits = (a: Box, c: Box) => a.x < c.x + c.w && c.x < a.x + a.w && Math.abs(a.y - c.y) < (a.h + c.h) / 2;
+    const bp = project(base);
+    const placed: Box[] = [
+      { x: bp.x - 18, y: bp.y, w: 36, h: 34 },
+      { x: bp.x - 50, y: bp.y + 27, w: 100, h: 16 },
+    ];
+    if (target) {
+      const tp = project(target);
+      placed.push({ x: tp.x - 10, y: tp.y, w: 20, h: 20 }, { x: tp.x + 10, y: tp.y - 14, w: target.name.length * 7.4 + 22, h: 26 });
+    }
+    if (progress === undefined && showRadius) {
+      const r = TRAVEL.radiusKm * scale;
+      const f = TRAVEL.freeKm * scale;
+      placed.push({ x: bp.x - 24, y: bp.y - r + 12, w: 48, h: 16 }, { x: bp.x - 48, y: bp.y - f + 9, w: 96, h: 15 });
+    }
     const towns = geo!.towns
       .filter((t) => t.rank >= minRank && t.name !== base.name && t.name !== target?.name && inView(t))
       .sort((a, b) => b.rank - a.rank)
       .filter((t) => {
         const p = project(t);
-        const w = t.name.length * 6.6 + 10;
-        if (placed.some((q) => Math.abs(q.y - p.y) < 18 && p.x < q.x + q.w && q.x < p.x + w)) return false;
-        placed.push({ ...p, w });
+        const big = t.rank >= 2;
+        const box = { x: p.x - 4, y: p.y, w: t.name.length * (big ? 7.3 : 6.1) + 12, h: big ? 16 : 14 };
+        if (box.x + box.w > W - 4 || placed.some((q) => hits(box, q))) return false;
+        placed.push(box);
         return true;
       })
       .slice(0, 40);
     const villages = spanKm <= 40 ? geo!.towns.filter((t) => t.rank === 1 && inView(t)).slice(0, 160) : [];
     return { project, scale, towns, villages };
-  }, [base, geo, target, progress]);
+  }, [base, geo, target, progress, showRadius]);
 
   if (!base || !view) return <div className={`grid-paper rounded-2xl bg-sand ${className}`} aria-hidden="true" style={{ aspectRatio: `${W}/${H}` }} />;
 

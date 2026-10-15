@@ -29,22 +29,25 @@ export default function Header() {
     <>
       <div className="no-print hidden bg-ink text-[13px] text-white/75 md:block">
         <div className="container-page flex h-9 items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
+          <div className="flex min-w-0 items-center gap-5 whitespace-nowrap">
             <span className="flex items-center gap-2">
               <StatusDot tone={status.open ? "ok" : "off"} />
               {status.text}
             </span>
-            <span className="hidden items-center gap-1.5 lg:flex">
+            <span className="hidden items-center gap-1.5 xl:flex">
               <Clock size={14} /> Odpovieme do 2 hodín v pracovnom čase
             </span>
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex shrink-0 items-center gap-5 whitespace-nowrap">
+            <ContactLink kind="tel" className="flex items-center gap-1.5 whitespace-nowrap font-semibold text-white hover:text-accent">
+              <Phone size={14} /> {BIZ.phoneLabel}
+            </ContactLink>
             {emergency && (
-              <Link to="/havaria" className="flex items-center gap-1.5 font-semibold text-white hover:text-accent">
+              <Link to="/havaria" className="flex items-center gap-1.5 whitespace-nowrap font-semibold text-white hover:text-accent">
                 <StatusDot tone="danger" /> Pohotovosť 24/7
               </Link>
             )}
-            <ContactLink kind="mail" className="hover:text-white">
+            <ContactLink kind="mail" className="hidden max-w-64 truncate hover:text-white xl:inline">
               {BIZ.email}
             </ContactLink>
           </div>
@@ -52,26 +55,23 @@ export default function Header() {
       </div>
       <header className={`no-print sticky top-0 z-40 border-b bg-paper/95 backdrop-blur transition-shadow ${scrolled ? "border-line shadow-[0_6px_20px_-12px_rgb(0_0_0/0.25)]" : "border-transparent"}`}>
         <div className="container-page flex h-16 items-center justify-between gap-4 md:h-[72px]">
-          <Link to="/" className="min-w-0" aria-label={`${BIZ.name} – domov`}>
-            <Logo />
+          <Link to="/" className="flex min-w-0" aria-label={`${BIZ.name} – domov`}>
+            <Logo taglineClassName="lg:max-xl:hidden" />
           </Link>
-          <nav aria-label="Hlavná navigácia" className="hidden items-center gap-1 lg:flex">
+          <nav aria-label="Hlavná navigácia" className="hidden shrink-0 items-center gap-0.5 lg:flex xl:gap-1">
             {NAV.map((n) => (
               <NavLink
                 key={n.to}
                 to={n.to}
-                className={({ isActive }) => `whitespace-nowrap rounded-lg px-3 py-2 text-[15px] font-semibold transition-colors ${isActive ? "bg-sand text-ink" : "text-soft hover:text-ink"}`}
+                className={({ isActive }) => `whitespace-nowrap rounded-lg px-2.5 py-2 text-[15px] font-semibold xl:px-3 transition-colors ${isActive ? "bg-sand text-ink" : "text-soft hover:text-ink"}`}
               >
                 {n.label}
               </NavLink>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
-            <ContactLink kind="tel" className="hidden items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-[15px] font-bold text-ink hover:bg-sand 2xl:flex">
-              <Phone size={18} /> {BIZ.phoneLabel}
-            </ContactLink>
+          <div className="flex shrink-0 items-center gap-2">
             {emergency && (
-              <Link to="/havaria" className="btn btn-sm hidden whitespace-nowrap border-2 border-danger/25 text-danger hover:border-danger hover:bg-danger-soft sm:inline-flex">
+              <Link to="/havaria" className="btn btn-sm hidden whitespace-nowrap border-2 border-danger/25 py-1.5 text-danger hover:border-danger hover:bg-danger-soft sm:inline-flex">
                 <Siren size={17} /> Havária
               </Link>
             )}
