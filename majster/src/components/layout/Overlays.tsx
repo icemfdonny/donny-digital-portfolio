@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { STUDIO } from "../../config";
 import { TRADE_LIST } from "../../data/trades";
 import { usePersistentState } from "../../lib/hooks";
-import { BIZ, PROFILE, TRADE } from "../../lib/profile";
+import { BIZ, PROFILE, TRADE, tradeSampleLink } from "../../lib/profile";
 import { resetDemo, useDB, type DemoTask } from "../../lib/store";
 import { ArrowRight, Check, Icon, Mail, Refresh, Sparkles, X } from "../icons";
 import { useToast } from "../toast";
@@ -217,7 +217,7 @@ function DemoBadge() {
               {TRADE_LIST.map((t) => (
                 <a
                   key={t.id}
-                  href={`/?remeslo=${t.id}`}
+                  href={tradeSampleLink(t.id)}
                   aria-current={t.id === TRADE.id ? "true" : undefined}
                   className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${t.id === TRADE.id ? "bg-white text-ink" : "bg-white/8 text-white/75 hover:bg-white/15 hover:text-white"}`}
                 >
