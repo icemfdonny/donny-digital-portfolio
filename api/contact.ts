@@ -100,8 +100,6 @@ export async function POST(request: Request) {
     });
     if (!res.ok) {
       console.error("Resend rejected the message:", res.status, await res.text());
-      // Shape of the key only (never the key itself), to tell a mis-pasted value from a revoked one.
-      console.error("RESEND_API_KEY shape:", { length: apiKey.length, startsWithRe: apiKey.startsWith("re_"), rawLength: (process.env.RESEND_API_KEY ?? "").length });
       return reply({ error: "send_failed" }, 502);
     }
   } catch (err) {
