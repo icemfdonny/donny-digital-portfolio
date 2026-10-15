@@ -1,0 +1,272 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warm off-white with a near-black ink. The accent is set per trade at runtime (see lib/profile.tsx). */
+  --color-bg: #f5f4f0;
+  --color-paper: #ffffff;
+  --color-sand: #eceae3;
+  --color-line: #e1dfd7;
+  --color-ink: #14171c;
+  --color-soft: #4a4f58;
+  --color-mute: #858a92;
+  --color-night: #101317;
+  --color-steel: #1c2128;
+  --color-danger: #d92d20;
+  --color-danger-soft: #fdecea;
+  --color-ok: #15803d;
+  --color-ok-soft: #e7f5ec;
+  --color-warn: #b45309;
+  --color-warn-soft: #fdf3e2;
+
+  --color-accent: #f2b600;
+  --color-accent-ink: #1a1400;
+  --color-accent-deep: #8a5d00;
+  --color-accent-soft: #fdf3d3;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-pop: pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  --animate-pulse-ring: pulse-ring 1.8s ease-out infinite;
+  --animate-blink: blink 1.2s ease-in-out infinite;
+  --animate-marquee: marquee 40s linear infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 10px transparent;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[15px] font-semibold leading-tight transition-[background-color,border-color,color,transform,box-shadow] duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-50;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 6rem;
+  }
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    overflow-x: clip;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    font-variation-settings: "wdth" 92;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent-deep);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  dialog::backdrop {
+    background: rgb(16 19 23 / 0.55);
+    backdrop-filter: blur(2px);
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-[0.72rem] font-bold uppercase tracking-[0.16em];
+  }
+  .container-page {
+    @apply mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8;
+  }
+  .display {
+    @apply font-display font-extrabold tracking-[-0.025em];
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-accent-ink shadow-[0_1px_0_rgb(0_0_0/0.12),inset_0_-2px_0_rgb(0_0_0/0.12)] hover:brightness-[1.06];
+  }
+  .btn-dark {
+    @apply btn bg-ink text-white hover:bg-steel;
+  }
+  .btn-outline {
+    @apply btn border-2 border-ink/15 bg-paper text-ink hover:border-ink/40;
+  }
+  .btn-ghost {
+    @apply btn text-soft hover:bg-ink/5 hover:text-ink;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white hover:bg-[#b42318];
+  }
+  .btn-light {
+    @apply btn bg-white text-ink hover:bg-white/90;
+  }
+  .btn-sm {
+    @apply rounded-lg px-3.5 py-2 text-sm;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-semibold text-ink;
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-paper px-3.5 py-3 text-[15px] text-ink outline-none transition-colors placeholder:text-mute/80 focus:border-ink/50 focus:ring-4 focus:ring-ink/5;
+  }
+  .field[aria-invalid="true"] {
+    @apply border-danger focus:ring-danger/10;
+  }
+
+  .card {
+    @apply rounded-2xl border border-line bg-paper;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3.5 py-2 text-sm font-medium text-soft transition-colors hover:border-ink/30 hover:text-ink;
+  }
+  .chip[aria-pressed="true"] {
+    @apply border-ink bg-ink text-white;
+  }
+
+  /* Big selectable tile used across the calculator, booking and emergency flows. */
+  .option-tile {
+    @apply relative flex w-full items-start gap-3 rounded-2xl border-2 border-line bg-paper p-4 text-left transition-[border-color,box-shadow,background-color] hover:border-ink/25;
+  }
+  .option-tile[aria-checked="true"],
+  .option-tile[aria-pressed="true"] {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+
+  .link {
+    @apply font-semibold text-accent-deep underline decoration-accent-deep/30 underline-offset-[3px] hover:decoration-accent-deep;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 0.7s ease,
+      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: var(--d, 0ms);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Diagonal hazard stripe in the accent colour, used sparingly as a trade-flavoured divider. */
+  .hazard {
+    background: repeating-linear-gradient(-45deg, var(--color-accent) 0 14px, var(--color-ink) 14px 28px);
+  }
+  .grid-paper {
+    background-image:
+      linear-gradient(to right, rgb(20 23 28 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(20 23 28 / 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .photo-fallback {
+    background:
+      radial-gradient(120% 90% at 15% 10%, color-mix(in srgb, var(--color-accent) 35%, transparent), transparent 55%),
+      linear-gradient(160deg, #262c35, #14171c 70%);
+  }
+
+  /* Range input in ink with an accent thumb. */
+  .range {
+    @apply h-2 w-full cursor-pointer appearance-none rounded-full bg-sand;
+    background-image: linear-gradient(var(--color-ink), var(--color-ink));
+    background-size: var(--fill, 50%) 100%;
+    background-repeat: no-repeat;
+  }
+  .range::-webkit-slider-thumb {
+    @apply size-6 appearance-none rounded-full border-4 border-ink bg-accent shadow;
+  }
+  .range::-moz-range-thumb {
+    @apply size-5 rounded-full border-4 border-ink bg-accent shadow;
+  }
+
+  /* Week grid lines in the admin schedule. */
+  .stripes {
+    background-image: repeating-linear-gradient(-45deg, rgb(20 23 28 / 0.045) 0 6px, transparent 6px 12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Printing a quote or a confirmation prints only that document. */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
