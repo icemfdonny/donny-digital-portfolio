@@ -46,9 +46,9 @@ export default function ServicesPage() {
                   <span className="rounded-lg bg-sand px-2.5 py-1 text-sm font-bold">{s.from}</span>
                 </div>
                 <p className="mt-4 text-[16px] leading-relaxed text-soft">{s.text}</p>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+                <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {s.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm font-medium">
+                    <li key={b} className="flex min-w-0 items-start gap-2 text-sm font-medium [overflow-wrap:anywhere]">
                       <Check size={16} strokeWidth={2.6} className="mt-0.5 text-ok" /> {b}
                     </li>
                   ))}

@@ -40,9 +40,9 @@ export function ProjectDialog({ project, onClose }: { project: Project | null; o
               ))}
             </dl>
             <p className="mt-5 text-[16px] leading-relaxed text-soft">{project.text}</p>
-            <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {project.scope.map((s) => (
-                <li key={s} className="flex items-start gap-2 text-sm font-medium">
+                <li key={s} className="flex min-w-0 items-start gap-2 text-sm font-medium [overflow-wrap:anywhere]">
                   <Check size={17} className="mt-0.5 text-ok" strokeWidth={2.6} /> {s}
                 </li>
               ))}
