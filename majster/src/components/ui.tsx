@@ -103,15 +103,15 @@ export function SectionHeading({
 }
 
 /** Square badge with the trade icon and the business name. */
-export function Logo({ tone = "dark", compact = false }: { tone?: "dark" | "light"; compact?: boolean }) {
+export function Logo({ tone = "dark", compact = false, taglineClassName = "" }: { tone?: "dark" | "light"; compact?: boolean; taglineClassName?: string }) {
   return (
-    <span className="inline-flex min-w-0 items-center gap-2.5">
+    <span className="flex min-w-0 items-center gap-2.5">
       <span className="relative grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink shadow-[inset_0_-3px_0_rgb(0_0_0/0.15)]">
         <Icon name={TRADE.icon} size={22} strokeWidth={2.3} />
       </span>
       <span className="flex min-w-0 flex-col leading-none">
         <span className={`display truncate text-[19px] ${tone === "light" ? "text-white" : "text-ink"}`}>{BIZ.name}</span>
-        {!compact && <span className={`mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.12em] ${tone === "light" ? "text-white/55" : "text-mute"}`}>{TRADE.tagline}</span>}
+        {!compact && <span className={`mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.12em] ${tone === "light" ? "text-white/55" : "text-mute"} ${taglineClassName}`}>{TRADE.tagline}</span>}
       </span>
     </span>
   );
